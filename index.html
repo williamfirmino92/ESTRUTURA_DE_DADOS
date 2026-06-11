@@ -325,11 +325,16 @@ nav {
 /* ── ABOUT GRID ── */
 .about-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
-@media (max-width: 780px) { .about-grid { grid-template-columns: 1fr; } }
+.about-card.wide { grid-column: 1 / -1; }
+
+@media (max-width: 680px) {
+  .about-grid { grid-template-columns: 1fr; }
+  .about-card.wide { grid-column: 1; }
+}
 
 .about-card {
   background: var(--bg);
@@ -378,7 +383,14 @@ nav {
 .info-key   { color: var(--text-muted); }
 .info-value { font-weight: 700; color: var(--text); }
 
-.ementa-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.ementa-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+@media (max-width: 680px) { .ementa-list { grid-template-columns: 1fr; } }
 
 .ementa-list li {
   font-size: 0.83rem; color: var(--text-secondary);
@@ -796,8 +808,7 @@ footer {
         </ul>
       </div>
 
-      <div class="about-card">
-        <div class="about-card-label">Ementa</div>
+      <div class="about-card wide">
         <ul class="ementa-list">
           <li>Estruturas de dados em Python: listas, dicionários, conjuntos</li>
           <li>Fundamentos do Django: MVT, settings e projeto base</li>
