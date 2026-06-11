@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apostila — Views, URLs e Templates no Django</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+
+  <style>
+    :root {
+      --azul:      #092e20;
+      --azul-m:    #0c4b33;
+      --azul-c:    #44b78b;
+      --azul-s:    #e8f5f0;
+      --verde:     #1a7a3c;
+      --verde-s:   #e8f5f0;
+      --laranja:   #c0620a;
+      --laranja-s: #fff3e6;
+      --roxo:      #6c3483;
+      --roxo-s:    #f5eef8;
+      --cinza-bg:  #f4fbf7;
+      --borda:     #d4ede3;
+      --texto:     #0f1f17;
+      --sidebar-w: 290px;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Segoe UI',system-ui,sans-serif; color:var(--texto); background:var(--cinza-bg); line-height:1.75; }
+
+    /* ── Sidebar ─────────────────────────────────────── */
+    .sidebar {
+      position:fixed; top:0; left:0;
+      width:var(--sidebar-w); height:100vh;
+      background:var(--azul); overflow-y:auto; z-index:100;
+    }
+    .sb-header { padding:26px 22px 18px; border-bottom:1px solid rgba(255,255,255,.1); }
+    .sb-header h1 { color:#fff; font-size:14px; font-weight:700; line-height:1.5; }
+    .sb-header p  { color:var(--azul-c); font-size:11px; margin-top:5px; }
+
+    /* parte colorida do título da seção na sidebar */
+    .sb-header .tag {
+      display:inline-block; padding:2px 8px; border-radius:4px;
+      font-size:10px; font-weight:700; margin-bottom:6px;
+    }
+    .tag-url  { background:#44b78b22; color:var(--azul-c); border:1px solid #44b78b55; }
+    .tag-view { background:#6c348322; color:#a569bd;       border:1px solid #6c348355; }
+    .tag-tpl  { background:#1a7a3c22; color:#44b78b;       border:1px solid #1a7a3c55; }
+
+    .sidebar nav { padding:10px 0 50px; }
+    .nav-group { color:rgba(255,255,255,.38); font-size:10px; font-weight:700;
+                 letter-spacing:1.5px; text-transform:uppercase; padding:16px 22px 5px; }
+    .sidebar nav a {
+      display:block; color:rgba(255,255,255,.72); text-decoration:none;
+      font-size:12.5px; padding:7px 22px; border-left:3px solid transparent; transition:.2s;
+    }
+    .sidebar nav a:hover, .sidebar nav a.ativo {
+      color:#fff; background:rgba(68,183,139,.14); border-left-color:var(--azul-c);
+    }
+    .num {
+      display:inline-flex; align-items:center; justify-content:center;
+      background:rgba(68,183,139,.22); color:var(--azul-c); font-size:10px; font-weight:700;
+      width:20px; height:20px; border-radius:4px; margin-right:8px; flex-shrink:0;
+    }
+
+    /* ── Conteúdo ─────────────────────────────────────── */
+    .content { margin-left:var(--sidebar-w); }
+
+    .hero {
+      background:linear-gradient(135deg,var(--azul) 0%,var(--azul-m) 100%);
+      padding:60px 64px 52px; color:#fff;
+    }
+    .hero-badges { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+    .hbadge {
+      border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.1);
+      color:#fff; padding:4px 13px; border-radius:20px; font-size:12px; font-weight:600;
+    }
+    .hbadge.url  { border-color:#44b78b88; background:#44b78b22; color:var(--azul-c); }
+    .hbadge.view { border-color:#a569bd88; background:#6c348322; color:#c39bd3; }
+    .hbadge.tpl  { border-color:#2ecc7188; background:#1a7a3c22; color:#7dcea0; }
+
+    .hero h1 { font-size:30px; font-weight:800; margin-bottom:10px; }
+    .hero p  { font-size:15px; opacity:.85; max-width:620px; }
+
+    section { max-width:940px; margin:0 auto; padding:52px 64px 10px; }
+
+    .section-title {
+      display:flex; align-items:center; gap:14px;
+      margin-bottom:26px; padding-bottom:16px; border-bottom:2px solid var(--borda);
+    }
+    .snum {
+      min-width:38px; height:38px; border-radius:9px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:800; color:#fff;
+    }
+    .snum.url  { background:var(--azul-c); }
+    .snum.view { background:var(--roxo); }
+    .snum.tpl  { background:var(--verde); }
+    .snum.flow { background:#c0620a; }
+    .snum.ex   { background:#092e20; }
+
+    .section-title h2 { font-size:22px; color:var(--azul); font-weight:700; }
+
+    h3 { font-size:15px; color:var(--azul-m); margin:30px 0 10px;
+         padding-left:12px; border-left:3px solid var(--azul-c); font-weight:700; }
+
+    p { margin-bottom:14px; font-size:14.5px; }
+    ul,ol { padding-left:22px; margin-bottom:14px; font-size:14.5px; }
+    li { margin-bottom:5px; }
+
+    /* ── Blocos de código ────────────────────────────── */
+    .file-label {
+      background:#092e20; color:#a8d5c2; font-size:11.5px; font-weight:700;
+      padding:9px 16px; border-radius:8px 8px 0 0; font-family:'Courier New',monospace;
+      display:flex; align-items:center; gap:8px; letter-spacing:.3px;
+    }
+    .file-label .dot { width:10px; height:10px; border-radius:50%; }
+    .dot-url  { background:var(--azul-c); }
+    .dot-view { background:#a569bd; }
+    .dot-tpl  { background:#2ecc71; }
+    .dot-py   { background:#f1c40f; }
+    .dot-sh   { background:#95a5a6; }
+    .dot-css  { background:#e74c3c; }
+
+    pre[class*="language-"] { margin:0!important; border-radius:0 0 8px 8px!important; font-size:12.5px!important; }
+    .cb { margin:18px 0; border-radius:8px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,.12); }
+
+    /* ── Caixas ──────────────────────────────────────── */
+    .box { border-radius:8px; padding:16px 20px; margin:18px 0; font-size:14px; line-height:1.65; }
+    .box strong { display:block; margin-bottom:6px; font-size:14.5px; }
+    .box-dica   { background:#e8f4fd; border-left:4px solid var(--azul-c); }
+    .box-aviso  { background:#fff8e6; border-left:4px solid #e6a817; }
+    .box-info   { background:var(--verde-s); border-left:4px solid var(--verde); }
+    .box-roxo   { background:var(--roxo-s); border-left:4px solid var(--roxo); }
+    .box-erro   { background:#fdecea; border-left:4px solid #c0392b; }
+
+    /* ── Tabelas ─────────────────────────────────────── */
+    table { width:100%; border-collapse:collapse; margin:18px 0; font-size:13.5px; }
+    th { background:var(--azul); color:#fff; padding:10px 14px; text-align:left; font-weight:600; }
+    td { padding:9px 14px; border-bottom:1px solid var(--borda); vertical-align:top; }
+    tr:nth-child(even) td { background:var(--azul-s); }
+
+    code:not([class]) {
+      background:#e4e8f0; color:#c0392b; padding:2px 6px;
+      border-radius:4px; font-size:12.5px; font-family:'Courier New',monospace;
+    }
+
+    /* ── Diagrama de fluxo ───────────────────────────── */
+    .flow {
+      background:#071c10; border-radius:10px; padding:28px 30px;
+      margin:20px 0; font-family:'Courier New',monospace; font-size:13px;
+      line-height:2; white-space:pre; overflow-x:auto;
+      color:#cbd5e1; /* texto padrão claro — sem isso herda o escuro do body */
+    }
+    .f-url  { color:#44b78b; font-weight:700; }
+    .f-view { color:#c084fc; font-weight:700; }
+    .f-tpl  { color:#4ade80; font-weight:700; }
+    .f-db   { color:#fbbf24; font-weight:700; }
+    .f-dim  { color:#94a3b8; } /* era #6b7280 — levemente mais claro para melhor leitura */
+    .f-ok   { color:#34d399; font-weight:700; }
+    .f-seta { color:#9ca3af; }
+
+    /* ── Pill labels inline ──────────────────────────── */
+    .pill {
+      display:inline-block; padding:1px 9px; border-radius:12px;
+      font-size:11.5px; font-weight:700; vertical-align:middle; margin:0 2px;
+    }
+    .pill-url  { background:#dcfce7; color:#0c4b33; }
+    .pill-view { background:#f3e8ff; color:#7c3aed; }
+    .pill-tpl  { background:#dcfce7; color:#166534; }
+    .pill-ctx  { background:#fff7ed; color:#c2410c; }
+
+    hr.div { border:none; border-top:1px solid var(--borda); margin:40px 0; }
+
+    /* ── Destaque de número de linha ─────────────────── */
+    .step {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:24px; height:24px; border-radius:50%; font-size:12px; font-weight:800;
+      color:#fff; margin-right:8px; flex-shrink:0;
+    }
+    .step-url  { background:var(--azul-c); }
+    .step-view { background:var(--roxo); }
+    .step-tpl  { background:var(--verde); }
+
+    .steps-row { display:flex; flex-direction:column; gap:14px; margin:20px 0; }
+    .step-item {
+      display:flex; align-items:flex-start; gap:12px;
+      background:#fff; border-radius:8px; padding:14px 18px;
+      border:1px solid var(--borda); font-size:14px;
+    }
+    .step-item p { margin:0; }
+
+    .sidebar::-webkit-scrollbar { width:4px; }
+    .sidebar::-webkit-scrollbar-thumb { background:rgba(255,255,255,.15); border-radius:2px; }
+
+    @media(max-width:768px) {
+      .sidebar { display:none; }
+      .content { margin-left:0; }
+      section  { padding:30px 22px 10px; }
+      .hero    { padding:36px 22px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════ SIDEBAR ════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sb-header">
+    <div>
+      <span class="tag tag-url">URLs</span>
+      <span class="tag tag-view">Views</span>
+      <span class="tag tag-tpl">Templates</span>
+    </div>
+    <h1>Django — O Trio que<br>Move a Aplicação</h1>
+    <p>Apostila de fluxo: Consulta.me</p>
+  </div>
+  <nav>
+    <div class="nav-group">Conceitos</div>
+    <a href="#s1"><span class="num">1</span> O Trio MVT</a>
+    <a href="#s2"><span class="num">2</span> Fluxo de uma Requisição</a>
+
+    <div class="nav-group">URLs</div>
+    <a href="#s3"><span class="num">3</span> O que são URLs</a>
+    <a href="#s4"><span class="num">4</span> path() e parâmetros</a>
+    <a href="#s5"><span class="num">5</span> include() e namespace</a>
+    <a href="#s6"><span class="num">6</span> name e reverse</a>
+
+    <div class="nav-group">Views</div>
+    <a href="#s7"><span class="num">7</span> O objeto request</a>
+    <a href="#s8"><span class="num">8</span> render() e redirect()</a>
+    <a href="#s9"><span class="num">9</span> Function-based Views</a>
+    <a href="#s10"><span class="num">10</span> Class-based Views</a>
+    <a href="#s11"><span class="num">11</span> get_context_data</a>
+    <a href="#s12"><span class="num">12</span> Proteção de Login</a>
+
+    <div class="nav-group">Templates</div>
+    <a href="#s13"><span class="num">13</span> Sintaxe básica</a>
+    <a href="#s14"><span class="num">14</span> Herança de Templates</a>
+    <a href="#s15"><span class="num">15</span> Tags de controle</a>
+    <a href="#s16"><span class="num">16</span> Filtros</a>
+    <a href="#s17"><span class="num">17</span> Formulários no Template</a>
+
+    <div class="nav-group">Fluxo Completo</div>
+    <a href="#s18"><span class="num">18</span> GET — Listagem</a>
+    <a href="#s19"><span class="num">19</span> GET — Formulário</a>
+    <a href="#s20"><span class="num">20</span> POST — Salvar</a>
+    <a href="#s21"><span class="num">21</span> Mapa do Projeto</a>
+  </nav>
+</aside>
+
+<!-- ═══════════════════════ CONTEÚDO ════════════════════════════ -->
+<main class="content">
+
+  <div class="hero">
+    <h1>Views, URLs e Templates no Django</h1>
+    <p>Entenda o fluxo completo de uma requisição — do endereço no browser até o HTML na tela — com exemplos reais do projeto Consulta.me.</p>
+    <div class="hero-badges">
+      <span class="hbadge url">URLs — Roteamento</span>
+      <span class="hbadge view">Views — Lógica</span>
+      <span class="hbadge tpl">Templates — Interface</span>
+      <span class="hbadge">Consulta.me</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SEÇÃO 1 ══════════════════════════════ -->
+  <section id="s1">
+    <div class="section-title">
+      <div class="snum flow">1</div>
+      <h2>O Trio MVT — Como o Django divide responsabilidades</h2>
+    </div>
+
+    <p>O Django organiza o código em três camadas que trabalham juntas. Cada uma tem uma única responsabilidade — isso facilita manutenção, teste e reutilização do código.</p>
+
+    <table>
+      <tr>
+        <th>Camada</th><th>Arquivo no projeto</th><th>Pergunta que responde</th><th>Analogia</th>
+      </tr>
+      <tr>
+        <td><span class="pill pill-url">URL</span></td>
+        <td><code>urls.py</code></td>
+        <td><em>"Qual view executa este endereço?"</em></td>
+        <td>Recepcionista: direciona a chamada para a pessoa certa</td>
+      </tr>
+      <tr>
+        <td><span class="pill pill-view">View</span></td>
+        <td><code>views.py</code></td>
+        <td><em>"O que fazer com esta requisição?"</em></td>
+        <td>Cozinheiro: recebe o pedido, prepara e entrega</td>
+      </tr>
+      <tr>
+        <td><span class="pill pill-tpl">Template</span></td>
+        <td><code>templates/*.html</code></td>
+        <td><em>"Como exibir os dados ao usuário?"</em></td>
+        <td>Prato: apresentação final do que foi preparado</td>
+      </tr>
+    </table>
+
+    <div class="box box-dica">
+      <strong>💡 Por que separar em três partes?</strong>
+      Se você misturar tudo num único lugar, qualquer mudança vira um problema: mudar o visual exige mexer na lógica, e vice-versa. Com a separação do Django, você pode redesenhar a interface sem tocar na lógica de negócio, ou trocar o banco de dados sem mudar nenhum HTML.
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 2 ══════════════════════════════ -->
+  <section id="s2">
+    <div class="section-title">
+      <div class="snum flow">2</div>
+      <h2>Fluxo de uma Requisição — O mapa completo</h2>
+    </div>
+
+    <p>Antes de entrar nos detalhes, veja o percurso completo de uma requisição no nosso projeto. Usaremos o exemplo de acessar a listagem de médicos (<code>/medicos/</code>):</p>
+
+    <div class="flow"><span class="f-dim">╔══════════════════════════════════════════════════════════════════╗
+║           FLUXO COMPLETO: GET /medicos/                          ║
+╚══════════════════════════════════════════════════════════════════╝</span>
+
+  <span class="f-dim">① Usuário digita no browser:</span>
+     http://127.0.0.1:8000<span class="f-url">/medicos/</span>
+                                    ↓
+  <span class="f-url">② sistema/urls.py</span> <span class="f-dim">recebe a requisição</span>
+     path('', include('<span class="f-url">intranet.urls</span>'))
+                                    ↓
+  <span class="f-url">③ intranet/urls.py</span> <span class="f-dim">encontra o padrão</span>
+     path('<span class="f-url">medicos/</span>', MedicoListView.as_view(), name='<span class="f-url">medico-list</span>')
+                                    ↓
+  <span class="f-view">④ MedicoListView</span> <span class="f-dim">(views.py) é executada</span>
+     • LoginRequiredMixin verifica sessão → OK
+     • get_queryset() → consulta o banco
+                                    ↓
+  <span class="f-db">⑤ Banco de dados</span> <span class="f-dim">retorna os dados</span>
+     SELECT * FROM intranet_medico WHERE ativo = 1 ORDER BY nome
+                                    ↓
+  <span class="f-view">⑥ View</span> <span class="f-dim">monta o contexto</span>
+     context = { '<span class="f-view">medicos</span>': [&lt;Medico: João&gt;, &lt;Medico: Ana&gt;, ...] }
+                                    ↓
+  <span class="f-tpl">⑦ Template</span> <span class="f-dim">é renderizado</span>
+     medico/listagem.html processa {{ medicos }} e gera HTML
+                                    ↓
+  <span class="f-ok">⑧ HTML completo</span> <span class="f-dim">é enviado ao browser</span>
+     &lt;table&gt;&lt;tr&gt;&lt;td&gt;João Silva&lt;/td&gt;...&lt;/table&gt;</div>
+
+    <div class="box box-info">
+      <strong>✅ Resumo em uma frase</strong>
+      A <span class="pill pill-url">URL</span> direciona para a <span class="pill pill-view">View</span> correta → a View busca dados e cria um contexto → o <span class="pill pill-tpl">Template</span> usa o contexto para gerar HTML.
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 3 ══════════════════════════════ -->
+  <section id="s3">
+    <div class="section-title">
+      <div class="snum url">3</div>
+      <h2>URLs — O Sistema de Roteamento</h2>
+    </div>
+
+    <p>O arquivo <code>urls.py</code> é a primeira coisa que o Django verifica quando recebe uma requisição. Ele compara o endereço acessado com uma lista de padrões (<em>patterns</em>) e encaminha para a view correspondente.</p>
+
+    <p>No nosso projeto temos <strong>dois arquivos</strong> de URLs trabalhando juntos:</p>
+
+    <div class="flow"><span class="f-dim">Requisição chega em:</span>
+
+  <span class="f-url">sistema/urls.py</span>  <span class="f-dim">← arquivo raiz (vê TODAS as requisições primeiro)</span>
+  ├── /admin/    → painel admin do Django
+  ├── /login/    → LoginView
+  ├── /logout/   → LogoutView
+  └── /...       → <span class="f-url">intranet/urls.py</span>  <span class="f-dim">← arquivo do app (cuida de tudo o mais)</span>
+                    ├── /             → index view
+                    ├── /home/        → home view
+                    ├── /medicos/     → MedicoListView
+                    ├── /medicos/novo/         → MedicoCreateView
+                    ├── /medicos/5/editar/     → MedicoUpdateView
+                    ├── /medicos/5/excluir/    → MedicoDeleteView
+                    └── ... (pacientes, consultas)</div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 4 ══════════════════════════════ -->
+  <section id="s4">
+    <div class="section-title">
+      <div class="snum url">4</div>
+      <h2>path() — Criando padrões de URL</h2>
+    </div>
+
+    <p>A função <code>path()</code> é a peça fundamental do roteamento. Ela recebe três argumentos principais:</p>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-url"></div>Assinatura da função path()</div>
+      <pre><code class="language-python">path( rota,  view,  name=... )
+#      ↑       ↑      ↑
+#      |       |      └── apelido para referenciar esta URL pelo nome (opcional mas recomendado)
+#      |       └───────── a view que será executada quando a rota bater
+#      └───────────────── o padrão da URL (string ou converter)</code></pre>
+    </div>
+
+    <h3>URLs estáticas — sem parâmetros</h3>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-url"></div>intranet/urls.py — URLs fixas</div>
+      <pre><code class="language-python">path('',       views.index,             name='index')
+# ''       = URL raiz: http://site.com/
+# index    = a função/classe view a executar
+# 'index'  = nome desta rota
+
+path('home/',  views.home,              name='home')
+# 'home/'  = URL: http://site.com/home/
+
+path('medicos/', views.MedicoListView.as_view(), name='medico-list')
+# 'medicos/' = URL: http://site.com/medicos/
+# .as_view() = obrigatório ao usar class-based views</code></pre>
+    </div>
+
+    <h3>URLs dinâmicas — com parâmetros</h3>
+
+    <p>Usamos <strong>conversores</strong> entre <code>&lt; &gt;</code> para capturar partes variáveis da URL e passá-las automaticamente para a view:</p>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-url"></div>intranet/urls.py — URLs com parâmetros</div>
+      <pre><code class="language-python">path('medicos/&lt;int:pk&gt;/editar/', views.MedicoUpdateView.as_view(), name='medico-update')
+#             ↑────────↑
+#             conversor:nome_do_parametro
+#
+# &lt;int:pk&gt; captura um número inteiro da URL e o passa para a view como argumento "pk"
+# Exemplos de URLs que batem neste padrão:
+#   /medicos/1/editar/   → pk=1
+#   /medicos/42/editar/  → pk=42
+#   /medicos/abc/editar/ → NÃO bate (abc não é int)
+
+path('medicos/&lt;int:pk&gt;/excluir/', views.MedicoDeleteView.as_view(), name='medico-delete')
+path('pacientes/&lt;int:pk&gt;/editar/', views.PacienteUpdateView.as_view(), name='paciente-update')</code></pre>
+    </div>
+
+    <h3>Tipos de conversores disponíveis</h3>
+
+    <table>
+      <tr><th>Conversor</th><th>Captura</th><th>Exemplo de URL</th><th>Valor passado à view</th></tr>
+      <tr><td><code>&lt;int:pk&gt;</code></td><td>Número inteiro</td><td><code>/medicos/5/editar/</code></td><td><code>pk=5</code> (int)</td></tr>
+      <tr><td><code>&lt;str:nome&gt;</code></td><td>Texto sem barra</td><td><code>/busca/joao/</code></td><td><code>nome="joao"</code> (str)</td></tr>
+      <tr><td><code>&lt;slug:slug&gt;</code></td><td>Letras, números, hífen</td><td><code>/artigo/meu-titulo/</code></td><td><code>slug="meu-titulo"</code></td></tr>
+      <tr><td><code>&lt;uuid:id&gt;</code></td><td>UUID formatado</td><td><code>/item/550e8400.../</code></td><td>objeto UUID</td></tr>
+    </table>
+
+    <div class="box box-aviso">
+      <strong>⚠️ A ordem dos padrões importa!</strong>
+      O Django testa os padrões de URL de cima para baixo e para na primeira que bater. Coloque padrões mais específicos antes dos mais genéricos. Por exemplo: <code>'medicos/novo/'</code> deve vir ANTES de <code>'medicos/&lt;int:pk&gt;/editar/'</code> — caso contrário, "novo" poderia ser interpretado como um pk.
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 5 ══════════════════════════════ -->
+  <section id="s5">
+    <div class="section-title">
+      <div class="snum url">5</div>
+      <h2>include() — Separando URLs por app</h2>
+    </div>
+
+    <p>Em vez de colocar todas as rotas em um único arquivo enorme, o Django permite <strong>delegar</strong> grupos de URLs para outros arquivos com o <code>include()</code>. O arquivo raiz (<code>sistema/urls.py</code>) fica limpo e apenas distribui para os apps.</p>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-url"></div>sistema/urls.py — arquivo raiz</div>
+      <pre><code class="language-python">from django.contrib import admin
+from django.contrib.auth import views as auth_views
+from django.urls import path, include   # include() importado aqui
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('admin/',   admin.site.urls),
+    # ↑ padrão do Django — painel admin
+
+    path('login/',   auth_views.LoginView.as_view(
+                         template_name='intranet/login.html'), name='login'),
+    # ↑ view de login pronta do Django usando nosso template
+
+    path('logout/',  auth_views.LogoutView.as_view(), name='logout'),
+    # ↑ view de logout pronta — redireciona para LOGOUT_REDIRECT_URL do settings
+
+    path('', include('intranet.urls')),
+    # ↑ include(): delega TODAS as demais URLs para o arquivo intranet/urls.py
+    # '' significa: sem prefixo — as URLs do app ficam na raiz do site
+    # Se fosse path('app/', include('intranet.urls')), ficariam em /app/medicos/, /app/home/ etc.
+
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# static(): em modo DEBUG, o Django mesmo serve os arquivos de upload (pasta /media/)</code></pre>
+    </div>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-url"></div>intranet/urls.py — arquivo do app</div>
+      <pre><code class="language-python">from django.urls import path
+from . import views    # importa views.py da mesma pasta (intranet/)
+
+# app_name define o "namespace" (espaço de nomes) para este app
+# É como um "sobrenome" das URLs: intranet:medico-list, intranet:home, etc.
+app_name = 'intranet'
+
+urlpatterns = [
+    path('',      views.index, name='index'),    # /
+    path('home/', views.home,  name='home'),     # /home/
+
+    # — Médicos —
+    path('medicos/',                   views.MedicoListView.as_view(),   name='medico-list'),
+    path('medicos/novo/',              views.MedicoCreateView.as_view(), name='medico-create'),
+    path('medicos/&lt;int:pk&gt;/editar/',  views.MedicoUpdateView.as_view(), name='medico-update'),
+    path('medicos/&lt;int:pk&gt;/excluir/', views.MedicoDeleteView.as_view(), name='medico-delete'),
+
+    # — Pacientes —
+    path('pacientes/',                   views.PacienteListView.as_view(),   name='paciente-list'),
+    path('pacientes/novo/',              views.PacienteCreateView.as_view(), name='paciente-create'),
+    path('pacientes/&lt;int:pk&gt;/editar/',  views.PacienteUpdateView.as_view(), name='paciente-update'),
+    path('pacientes/&lt;int:pk&gt;/excluir/', views.PacienteDeleteView.as_view(), name='paciente-delete'),
+
+    # — Consultas —
+    path('consultas/',                   views.ConsultaListView.as_view(),   name='consulta-list'),
+    path('consultas/nova/',              views.ConsultaCreateView.as_view(), name='consulta-create'),
+    path('consultas/&lt;int:pk&gt;/editar/',  views.ConsultaUpdateView.as_view(), name='consulta-update'),
+    path('consultas/&lt;int:pk&gt;/excluir/', views.ConsultaDeleteView.as_view(), name='consulta-delete'),
+]</code></pre>
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 6 ══════════════════════════════ -->
+  <section id="s6">
+    <div class="section-title">
+      <div class="snum url">6</div>
+      <h2>name e reverse — Referenciando URLs pelo apelido</h2>
+    </div>
+
+    <p>Cada URL tem um <strong>name</strong> (apelido). Em vez de escrever a URL como string fixa (o que quebraria se você mudasse o padrão), você sempre referencia pelo nome.</p>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-url"></div>Três formas de usar o name de uma URL</div>
+      <pre><code class="language-python"># ── 1. No Python (views.py) ──────────────────────────────────────────────────
+
+from django.urls import reverse, reverse_lazy
+
+# reverse(): converte o name em caminho real AGORA (avaliação imediata)
+url = reverse('intranet:medico-list')   # retorna '/medicos/'
+
+# reverse_lazy(): converte o name QUANDO necessário (avaliação tardia)
+# Obrigatório em class-based views porque as URLs ainda não estão prontas
+# quando a classe é definida no início do arquivo
+success_url = reverse_lazy('intranet:medico-list')   # '/medicos/'
+
+# Com parâmetro dinâmico (pk):
+url_editar = reverse('intranet:medico-update', kwargs={'pk': 5})
+# retorna '/medicos/5/editar/'</code></pre>
+    </div>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-tpl"></div>No template HTML — tag {% url %}</div>
+      <pre><code class="language-markup">&lt;!-- Sem parâmetro --&gt;
+&lt;a href="{% url 'intranet:medico-list' %}"&gt;Ver Médicos&lt;/a&gt;
+&lt;!-- gera: href="/medicos/" --&gt;
+
+&lt;!-- Com parâmetro pk (capturado da URL atual ou do loop) --&gt;
+&lt;a href="{% url 'intranet:medico-update' medico.pk %}"&gt;Editar&lt;/a&gt;
+&lt;!-- se medico.pk = 3, gera: href="/medicos/3/editar/" --&gt;
+
+&lt;a href="{% url 'intranet:medico-delete' medico.pk %}"&gt;Excluir&lt;/a&gt;
+&lt;!-- se medico.pk = 3, gera: href="/medicos/3/excluir/" --&gt;
+
+&lt;!-- Auth (sem namespace porque está em sistema/urls.py direto) --&gt;
+&lt;a href="{% url 'login' %}"&gt;Login&lt;/a&gt;          &lt;!-- /login/ --&gt;
+&lt;form action="{% url 'logout' %}"&gt;...&lt;/form&gt;  &lt;!-- /logout/ --&gt;</code></pre>
+    </div>
+
+    <div class="box box-roxo">
+      <strong>💜 Por que usar name em vez de digitar a URL direto?</strong>
+      Se você escrever <code>href="/medicos/"</code> em 10 templates e um dia precisar mudar para <code>/lista-medicos/</code>, terá que alterar 10 arquivos. Com <code>{% url 'intranet:medico-list' %}</code>, você muda apenas o padrão em <code>urls.py</code> e todos os links atualizam automaticamente.
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 7 ══════════════════════════════ -->
+  <section id="s7">
+    <div class="section-title">
+      <div class="snum view">7</div>
+      <h2>O Objeto request — O que a View recebe</h2>
+    </div>
+
+    <p>Toda view recebe como primeiro argumento o objeto <code>request</code>. Ele contém <strong>tudo</strong> sobre a requisição que chegou: quem enviou, qual método HTTP, quais dados foram mandados, etc.</p>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-view"></div>intranet/views.py — usando o objeto request</div>
+      <pre><code class="language-python">def exemplo_view(request):
+    # ── Método HTTP ───────────────────────────────────────────────────────────
+    request.method         # 'GET' ou 'POST' (ou 'PUT', 'DELETE', etc.)
+
+    # ── Usuário autenticado ───────────────────────────────────────────────────
+    request.user           # objeto User do Django (ou AnonymousUser se não logado)
+    request.user.username  # 'william'
+    request.user.is_authenticated  # True/False — se está logado
+    request.user.is_staff  # True/False — se é administrador
+
+    # ── Dados enviados pelo formulário (POST) ─────────────────────────────────
+    request.POST           # dicionário com os dados do formulário
+    request.POST.get('nome')       # valor do campo "nome" (ou None se não existir)
+    request.POST.get('email', '')  # valor do campo "email" (ou '' se não existir)
+
+    # ── Parâmetros da URL (GET) ───────────────────────────────────────────────
+    request.GET            # dicionário com parâmetros da query string
+    # ex: /medicos/?busca=joao  →  request.GET.get('busca') == 'joao'
+
+    # ── Arquivos enviados (upload) ────────────────────────────────────────────
+    request.FILES          # dicionário com arquivos enviados
+
+    # ── Sessão ───────────────────────────────────────────────────────────────
+    request.session        # dicionário persistente entre requisições (mantém login)
+
+    # ── Caminho acessado ─────────────────────────────────────────────────────
+    request.path           # '/medicos/novo/'
+
+
+# ── Como usamos no projeto ────────────────────────────────────────────────────
+
+def index(request):
+    if request.user.is_authenticated:   # ← usa request.user
+        return redirect('intranet:home')
+    return render(request, 'intranet/index.html')</code></pre>
+    </div>
+
+    <div class="box box-dica">
+      <strong>💡 request.user nos templates</strong>
+      O Django injeta o <code>request</code> em todos os templates automaticamente (graças ao <code>context_processors.request</code> no settings). Por isso podemos usar <code>{{ request.user.username }}</code> diretamente no HTML sem precisar passar pelo contexto da view.
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 8 ══════════════════════════════ -->
+  <section id="s8">
+    <div class="section-title">
+      <div class="snum view">8</div>
+      <h2>render() e redirect() — O que a View retorna</h2>
+    </div>
+
+    <p>Uma view sempre precisa retornar uma <strong>resposta HTTP</strong>. As duas funções mais usadas são <code>render()</code> e <code>redirect()</code>.</p>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-view"></div>render() — renderiza um template e devolve HTML</div>
+      <pre><code class="language-python">from django.shortcuts import render
+
+def home(request):
+    #          ↓ request   ↓ caminho do template    ↓ contexto (opcional)
+    return render(request, 'intranet/home.html',    context)
+
+# render() faz três coisas em uma linha:
+#   1. Carrega o arquivo intranet/templates/intranet/home.html
+#   2. Processa as tags {{ }} e {% %} usando o contexto
+#   3. Devolve o HTML gerado como resposta HTTP 200
+
+# Com contexto:
+medicos = Medico.objects.filter(ativo=True)
+return render(request, 'intranet/medico/listagem.html', {
+    'medicos': medicos,   # disponível no template como {{ medicos }}
+    'titulo': 'Lista'     # disponível no template como {{ titulo }}
+})</code></pre>
+    </div>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-view"></div>redirect() — redireciona para outra URL</div>
+      <pre><code class="language-python">from django.shortcuts import redirect
+
+# Formas de usar redirect():
+
+# 1. Pelo name da URL (mais comum e recomendado)
+return redirect('intranet:home')          # vai para /home/
+return redirect('intranet:medico-list')   # vai para /medicos/
+
+# 2. Pelo caminho direto
+return redirect('/medicos/')
+
+# 3. Com parâmetro (para editar registro específico)
+return redirect('intranet:medico-update', pk=medico.id)
+
+# redirect() retorna HTTP 302 (Found) — o browser faz nova requisição para a nova URL
+# Isso é o padrão "Post/Redirect/Get" — evita reenvio do formulário ao recarregar</code></pre>
+    </div>
+
+    <h3>Post/Redirect/Get — Por que redirecionar após o POST?</h3>
+
+    <div class="flow"><span class="f-dim">SEM redirect (problema):</span>
+  POST /medicos/novo/  →  View salva  →  render(listagem.html)
+  Usuário pressiona F5 →  Browser pergunta "reenviar formulário?"
+  Se confirmar →  salva de novo  →  registro duplicado! 😱
+
+<span class="f-dim">COM redirect (correto — padrão do Django):</span>
+  POST /medicos/novo/  →  View salva  →  redirect('/medicos/')
+  Browser faz GET /medicos/  →  View renderiza listagem
+  Usuário pressiona F5 →  apenas recarrega a listagem (GET)  →  seguro ✅</div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 9 ══════════════════════════════ -->
+  <section id="s9">
+    <div class="section-title">
+      <div class="snum view">9</div>
+      <h2>Function-based Views — Funções simples</h2>
+    </div>
+
+    <p>Function-based views (FBV) são simples funções Python. Você tem controle total sobre o código — ideal para lógicas que não seguem o padrão CRUD.</p>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-view"></div>intranet/views.py — as duas FBVs do projeto</div>
+      <pre><code class="language-python">def index(request):
+    """
+    Página inicial (/).
+    Lógica: se já está logado → vai para home, senão → mostra landing page.
+    """
+    if request.user.is_authenticated:
+        # is_authenticated: True se existe sessão de login ativa
+        return redirect('intranet:home')        # redireciona: HTTP 302 para /home/
+
+    # Caso contrário, renderiza a landing page (sem menu de logado)
+    return render(request, 'intranet/index.html')
+    # Não passa contexto porque index.html não precisa de dados do banco
+
+
+def home(request):
+    """
+    Página inicial pós-login (/home/).
+    Simples: só renderiza o template.
+    A proteção é feita pelo decorator @login_required.
+    """
+    return render(request, 'intranet/home.html')
+
+# @login_required: se não estiver logado, redireciona para LOGIN_URL (/login/?next=/home/)
+# O decorator "envolve" a função — é executado antes dela</code></pre>
+    </div>
+
+    <div class="box box-dica">
+      <strong>💡 Quando usar Function-based vs Class-based?</strong>
+      Use FBV quando a lógica é específica, não encaixa em CRUD, ou você precisa de controle fino sobre o fluxo. Use CBV quando é uma operação padrão (listar, criar, editar, deletar) — o Django já entrega esse comportamento pronto.
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 10 ══════════════════════════════ -->
+  <section id="s10">
+    <div class="section-title">
+      <div class="snum view">10</div>
+      <h2>Class-based Views — O CRUD pronto</h2>
+    </div>
+
+    <p>O Django oferece views genéricas que implementam operações comuns. Em vez de escrever o fluxo inteiro, você apenas herda a classe e define o que é específico do seu caso.</p>
+
+    <table>
+      <tr><th>Classe</th><th>HTTP</th><th>O que faz no projeto</th><th>URL exemplo</th></tr>
+      <tr><td><code>ListView</code></td><td>GET</td><td>Lista todos os médicos ativos</td><td><code>/medicos/</code></td></tr>
+      <tr><td><code>CreateView</code></td><td>GET + POST</td><td>Exibe form vazio / salva novo médico</td><td><code>/medicos/novo/</code></td></tr>
+      <tr><td><code>UpdateView</code></td><td>GET + POST</td><td>Exibe form preenchido / salva edição</td><td><code>/medicos/5/editar/</code></td></tr>
+      <tr><td><code>DeleteView</code></td><td>GET + POST</td><td>Confirma / executa exclusão</td><td><code>/medicos/5/excluir/</code></td></tr>
+    </table>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-view"></div>intranet/views.py — CBVs do Médico com tudo explicado</div>
+      <pre><code class="language-python">from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+
+
+class MedicoListView(LoginRequiredMixin, ListView):
+    #                ↑──────────────────↑  ↑──────↑
+    #                Mixin de login         View genérica de listagem
+    #
+    # Herança múltipla: MedicoListView tem o comportamento do ListView
+    # + a proteção de login do LoginRequiredMixin
+
+    model               = Medico              # qual tabela do banco consultar
+    template_name       = 'intranet/medico/listagem.html'  # template a renderizar
+    context_object_name = 'medicos'
+    # context_object_name: nome da variável no template
+    # sem isso, o padrão seria 'object_list' — muito genérico
+    # com isso, no template usamos {{ medicos }} em vez de {{ object_list }}
+
+    def get_queryset(self):
+        # Sobrescreve a query padrão (que retornaria TODOS os médicos)
+        # filter(ativo=True) → só médicos ativos
+        # order_by('nome')   → ordenados por nome A-Z
+        return Medico.objects.filter(ativo=True).order_by('nome')
+        # O ListView chama get_queryset() automaticamente e passa o resultado
+        # para o template no contexto como 'medicos'
+
+
+class MedicoCreateView(LoginRequiredMixin, CreateView):
+
+    model         = Medico
+    form_class    = MedicoForm          # qual formulário usar (de forms.py)
+    template_name = 'intranet/medico/formulario.html'
+    success_url   = reverse_lazy('intranet:medico-list')
+    # success_url: para onde redirecionar APÓS salvar com sucesso
+    # reverse_lazy() porque a URL é resolvida em tempo de execução
+
+    # O CreateView faz isso automaticamente:
+    #   GET  → cria form vazio,        renderiza template com o form
+    #   POST → valida form, salva,     redireciona para success_url
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # super()... chama o get_context_data original → garante que 'form' está no ctx
+        ctx['titulo'] = 'Cadastro de Médico'
+        # adiciona 'titulo' ao contexto → {{ titulo }} no template = "Cadastro de Médico"
+        return ctx
+
+
+class MedicoUpdateView(LoginRequiredMixin, UpdateView):
+
+    model         = Medico
+    form_class    = MedicoForm
+    template_name = 'intranet/medico/formulario.html'  # mesmo template do Create!
+    success_url   = reverse_lazy('intranet:medico-list')
+
+    # O UpdateView faz isso automaticamente:
+    #   GET  → busca o objeto pelo pk da URL, cria form preenchido, renderiza
+    #   POST → valida form, atualiza registro, redireciona para success_url
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['titulo'] = 'Editar Médico'
+        # Mesmo template, título diferente — o CreateView recebe "Cadastro",
+        # o UpdateView recebe "Editar"
+        return ctx
+
+
+class MedicoDeleteView(LoginRequiredMixin, DeleteView):
+
+    model         = Medico
+    template_name = 'intranet/medico/confirmar_exclusao.html'
+    success_url   = reverse_lazy('intranet:medico-list')
+
+    # O DeleteView faz isso automaticamente:
+    #   GET  → busca objeto pelo pk, renderiza template de confirmação
+    #   POST → deleta o objeto, redireciona para success_url
+    # Exige POST para deletar — protege contra exclusão acidental por link/bot</code></pre>
+    </div>
+
+    <div class="box box-info">
+      <strong>✅ O que o UpdateView faz automaticamente que o Create não faz</strong>
+      O UpdateView recebe o <code>pk</code> da URL (<code>/medicos/5/editar/</code>), busca o objeto <code>Medico.objects.get(pk=5)</code> e preenche o formulário com os dados existentes. Se o pk não existir, retorna HTTP 404 automaticamente.
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 11 ══════════════════════════════ -->
+  <section id="s11">
+    <div class="section-title">
+      <div class="snum view">11</div>
+      <h2>get_context_data — Passando dados para o Template</h2>
+    </div>
+
+    <p>O <strong>contexto</strong> é o dicionário que a view monta e entrega ao template. Cada chave do dicionário vira uma variável disponível no HTML.</p>
+
+    <div class="flow"><span class="f-dim">A View monta o contexto:</span>
+
+  <span class="f-view">views.py</span>
+  context = {
+      '<span class="f-view">medicos</span>':      [Medico#1, Medico#2, ...],   <span class="f-dim">← vem do get_queryset()</span>
+      '<span class="f-view">titulo</span>':        'Listagem de Médicos',       <span class="f-dim">← adicionado no get_context_data()</span>
+      '<span class="f-view">form</span>':          &lt;MedicoForm instance&gt;,      <span class="f-dim">← adicionado pelo CreateView/UpdateView</span>
+      '<span class="f-view">request</span>':       &lt;HttpRequest object&gt;,       <span class="f-dim">← adicionado automaticamente pelo Django</span>
+      '<span class="f-view">user</span>':          &lt;User: william&gt;,             <span class="f-dim">← adicionado automaticamente</span>
+  }
+                            ↓
+  <span class="f-tpl">template</span> recebe o contexto e substitui as variáveis:
+  {{ medicos }}  →  [Medico#1, Medico#2, ...]
+  {{ titulo  }}  →  'Listagem de Médicos'
+  {{ form    }}  →  renderiza os &lt;input&gt;s do formulário</div>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-view"></div>Exemplo real — ConsultaCreateView (o caso mais complexo)</div>
+      <pre><code class="language-python">class ConsultaCreateView(LoginRequiredMixin, CreateView):
+    model         = Consulta
+    form_class    = ConsultaForm
+    template_name = 'intranet/consulta/formulario.html'
+    success_url   = reverse_lazy('intranet:consulta-list')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # Após super(), ctx já contém:
+        #   'form'   → instância do ConsultaForm
+        #   'object' → None (CreateView não tem objeto existente)
+        #   'view'   → self (a própria view)
+
+        ctx['titulo'] = 'Agendamento de Consulta'
+        # {{ titulo }} no template
+
+        ctx['medicos_json'] = _medicos_json()
+        # _medicos_json() retorna string JSON com todos os médicos ativos
+        # Usado pelo JavaScript no template para filtrar médicos por especialidade
+        # {{ medicos_json|escapejs }} no template
+
+        ctx['especialidades'] = ESPECIALIDADES
+        # Lista de tuplas de especialidades
+        # Disponível no template mas não usada diretamente (o form já tem o select)
+
+        return ctx
+
+
+# ── A função auxiliar usada acima ──────────────────────────────────────────────
+import json
+
+def _medicos_json():
+    # .values() retorna dicionários Python (em vez de objetos Model)
+    # Mais leve e diretamente serializável para JSON
+    medicos = list(
+        Medico.objects.filter(ativo=True)
+               .order_by('nome')
+               .values('id', 'nome', 'sobrenome', 'especialidade')
+    )
+    return json.dumps(medicos, ensure_ascii=False)
+    # ensure_ascii=False → mantém acentos: "Cardiologia" não vira é...</code></pre>
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 12 ══════════════════════════════ -->
+  <section id="s12">
+    <div class="section-title">
+      <div class="snum view">12</div>
+      <h2>Proteção de Login — Quem pode acessar cada view</h2>
+    </div>
+
+    <p>No nosso projeto, apenas usuários autenticados podem acessar as telas internas. O Django oferece dois mecanismos equivalentes — um para funções, outro para classes:</p>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-view"></div>intranet/views.py — os dois jeitos de proteger</div>
+      <pre><code class="language-python">from django.contrib.auth.decorators import login_required     # para funções
+from django.contrib.auth.mixins    import LoginRequiredMixin  # para classes
+
+
+# ── Para Function-based views: decorator ──────────────────────────────────────
+
+@login_required
+# ↑ Decorator: executa ANTES da função
+# Se o usuário não estiver logado:
+#   → redireciona para LOGIN_URL (settings.py: '/login/')
+#   → adiciona ?next=/home/ na URL para retornar após o login
+def home(request):
+    return render(request, 'intranet/home.html')
+
+
+# ── Para Class-based views: Mixin ─────────────────────────────────────────────
+
+class MedicoListView(LoginRequiredMixin, ListView):
+#                    ↑────────────────↑
+#                    Mixin de login — DEVE ser o PRIMEIRO na herança
+#                    Se vier depois do ListView, pode não funcionar
+
+    model = Medico
+    # ...
+
+
+# ── O que acontece quando acessa sem login ────────────────────────────────────
+
+# Usuário tenta acessar /medicos/ sem estar logado:
+# → LoginRequiredMixin detecta: request.user.is_authenticated == False
+# → Redireciona para: /login/?next=/medicos/
+# → Após login: Django lê o parâmetro "next" e redireciona para /medicos/</code></pre>
+    </div>
+
+    <div class="flow"><span class="f-dim">Fluxo de proteção de login:</span>
+
+  Acessa /medicos/ sem login
+         ↓
+  LoginRequiredMixin: is_authenticated? → <span class="f-db">NÃO</span>
+         ↓
+  Redireciona para <span class="f-url">/login/?next=/medicos/</span>
+         ↓
+  Usuário preenche login → Django autentica → cria sessão
+         ↓
+  Lê parâmetro "next=/medicos/" → redireciona de volta para <span class="f-url">/medicos/</span>
+         ↓
+  LoginRequiredMixin: is_authenticated? → <span class="f-ok">SIM</span> → executa a view</div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 13 ══════════════════════════════ -->
+  <section id="s13">
+    <div class="section-title">
+      <div class="snum tpl">13</div>
+      <h2>Sintaxe dos Templates — Variáveis e Tags</h2>
+    </div>
+
+    <p>Os templates Django misturam HTML puro com marcadores especiais. Existem dois tipos de marcadores:</p>
+
+    <table>
+      <tr><th>Marcador</th><th>Tipo</th><th>Função</th><th>Exemplo</th></tr>
+      <tr><td><code>{{ ... }}</code></td><td>Variável</td><td>Exibe um valor do contexto</td><td><code>{{ medico.nome }}</code></td></tr>
+      <tr><td><code>{% ... %}</code></td><td>Tag</td><td>Executa lógica (if, for, url…)</td><td><code>{% if user.is_authenticated %}</code></td></tr>
+      <tr><td><code>{# ... #}</code></td><td>Comentário</td><td>Ignorado na saída HTML</td><td><code>{# TODO: adicionar paginação #}</code></td></tr>
+    </table>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-tpl"></div>Sintaxe de variáveis — acessando dados do contexto</div>
+      <pre><code class="language-markup">&lt;!-- Variável simples --&gt;
+{{ titulo }}
+&lt;!-- se contexto tem titulo='Listagem de Médicos', renderiza: Listagem de Médicos --&gt;
+
+&lt;!-- Atributo de objeto --&gt;
+{{ medico.nome }}
+{{ medico.especialidade }}
+{{ medico.criacao_data }}
+
+&lt;!-- Acesso aninhado — ForeignKey --&gt;
+{{ consulta.paciente_id.nome }}
+&lt;!-- consulta → paciente_id (objeto Paciente) → .nome --&gt;
+
+{{ consulta.medico_id.especialidade }}
+&lt;!-- consulta → medico_id (objeto Medico) → .especialidade --&gt;
+
+&lt;!-- Método do modelo (sem parênteses nos templates!) --&gt;
+{{ consulta.get_status_display }}
+&lt;!-- chama consulta.get_status_display() → retorna "Agendada" em vez de "A" --&gt;
+
+&lt;!-- Variável do usuário (disponível globalmente) --&gt;
+{{ request.user.username }}
+{{ request.user.get_full_name }}</code></pre>
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 14 ══════════════════════════════ -->
+  <section id="s14">
+    <div class="section-title">
+      <div class="snum tpl">14</div>
+      <h2>Herança de Templates — extends e block</h2>
+    </div>
+
+    <p>A herança de templates evita repetição de código. O template <strong>pai</strong> define a estrutura completa com blocos vazios; os <strong>filhos</strong> apenas preenchem os blocos que precisam.</p>
+
+    <div class="flow"><span class="f-dim">Árvore de herança do projeto:</span>
+
+  <span class="f-tpl">base.html</span>                ← pai de todos
+  │  define: DOCTYPE, head, header sem login, footer
+  │  blocos: {% block title %}, {% block header %},
+  │          {% block content %}, {% block extra_scripts %}
+  │
+  ├── <span class="f-tpl">index.html</span>            ← landing page (não logado)
+  │   extends base.html
+  │   preenche: {% block content %} com a seção hero
+  │
+  ├── <span class="f-tpl">login.html</span>            ← página de login
+  │   extends base.html
+  │   preenche: {% block content %} com o formulário
+  │
+  └── <span class="f-tpl">base_logado.html</span>      ← pai das páginas autenticadas
+      extends base.html
+      substitui: {% block header %} com nav + dropdown CADASTROS
+      │
+      ├── <span class="f-tpl">home.html</span>         ← home pós-login
+      ├── <span class="f-tpl">medico/listagem.html</span>
+      ├── <span class="f-tpl">medico/formulario.html</span>
+      ├── <span class="f-tpl">medico/confirmar_exclusao.html</span>
+      ├── <span class="f-tpl">paciente/listagem.html</span>
+      ├── <span class="f-tpl">paciente/formulario.html</span>
+      ├── <span class="f-tpl">consulta/listagem.html</span>
+      └── <span class="f-tpl">consulta/formulario.html</span></div>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-tpl"></div>base.html — o pai que define os blocos</div>
+      <pre><code class="language-markup">{% load static %}
+&lt;!DOCTYPE html&gt;
+&lt;html lang="pt-br"&gt;
+&lt;head&gt;
+  &lt;title&gt;
+    {% block title %}Consulta.me{% endblock %}
+    &lt;!-- ↑ bloco com valor padrão: se o filho não preencher, usa "Consulta.me" --&gt;
+  &lt;/title&gt;
+  &lt;link rel="stylesheet" href="{% static 'intranet/style.css' %}"&gt;
+  {% block extra_head %}{% endblock %} &lt;!-- bloco vazio: filhos podem inserir CSS extra --&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+  {% block header %}
+    &lt;!-- Header padrão: logo + botão Login --&gt;
+    &lt;header class="header"&gt;...&lt;/header&gt;
+  {% endblock %}
+  &lt;!-- ↑ base_logado.html substitui este bloco inteiro --&gt;
+
+  {% block content %}{% endblock %}
+  &lt;!-- ↑ bloco vazio — cada página filha coloca seu conteúdo aqui --&gt;
+
+  &lt;footer class="footer"&gt;...&lt;/footer&gt;
+
+  {% block extra_scripts %}{% endblock %}
+  &lt;!-- ↑ bloco vazio para scripts JS extras (ex: consulta/formulario.html) --&gt;
+
+&lt;/body&gt;&lt;/html&gt;</code></pre>
+    </div>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-tpl"></div>medico/listagem.html — filho que usa base_logado.html</div>
+      <pre><code class="language-markup">{% extends 'intranet/base_logado.html' %}
+&lt;!-- ↑ DEVE ser a primeira linha — declara de qual pai este template herda --&gt;
+&lt;!-- Herda: base_logado.html → que por sua vez herda base.html --&gt;
+&lt;!-- Resultado: tem o layout completo (head, header logado, footer) --&gt;
+
+{% load static %}
+&lt;!-- ↑ mesmo herdando, precisa carregar as tags aqui --&gt;
+
+{% block title %}Listagem de Médicos{% endblock %}
+&lt;!-- substitui o bloco title de base.html: &lt;title&gt;Listagem de Médicos&lt;/title&gt; --&gt;
+
+{% block content %}
+&lt;!-- tudo aqui vai para dentro do bloco content de base.html --&gt;
+&lt;main class="container"&gt;
+  &lt;section class="card"&gt;
+    &lt;h2 class="title"&gt;Listagem de médicos&lt;/h2&gt;
+    &lt;!-- ... conteúdo da página ... --&gt;
+  &lt;/section&gt;
+&lt;/main&gt;
+{% endblock %}
+&lt;!-- Não precisa definir extra_scripts pois não usa JS extra nesta página --&gt;</code></pre>
+    </div>
+
+    <div class="box box-roxo">
+      <strong>💜 {{ block.super }} — herdando o conteúdo do bloco pai</strong>
+      Se quiser manter o conteúdo do bloco pai E adicionar mais, use <code>{{ block.super }}</code>. Exemplo: o filho pode ter <code>{% block title %}{{ block.super }} — Médicos{% endblock %}</code> que geraria "Consulta.me — Médicos".
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 15 ══════════════════════════════ -->
+  <section id="s15">
+    <div class="section-title">
+      <div class="snum tpl">15</div>
+      <h2>Tags de Controle — if, for, url, static, csrf_token</h2>
+    </div>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-tpl"></div>Tags usadas no projeto — explicadas uma a uma</div>
+      <pre><code class="language-markup">&lt;!-- ── {% if %} — Condicional ──────────────────────────────────────────── --&gt;
+
+{% if medicos %}
+  &lt;p&gt;Há {{ medicos|length }} médicos cadastrados.&lt;/p&gt;
+{% elif request.user.is_staff %}
+  &lt;p&gt;Nenhum médico. Você pode cadastrar um.&lt;/p&gt;
+{% else %}
+  &lt;p&gt;Nenhum médico encontrado.&lt;/p&gt;
+{% endif %}
+&lt;!-- Operadores disponíveis: ==, !=, &lt;, &gt;, in, not in, is, is not --&gt;
+
+
+&lt;!-- ── {% for %} — Loop ─────────────────────────────────────────────────── --&gt;
+
+{% for medico in medicos %}
+  &lt;tr&gt;
+    &lt;td&gt;{{ medico.nome }}&lt;/td&gt;
+    &lt;td&gt;{{ forloop.counter }}&lt;/td&gt;
+    &lt;!-- forloop.counter: número da iteração atual (começa em 1) --&gt;
+    &lt;!-- forloop.counter0: começa em 0 --&gt;
+    &lt;!-- forloop.first: True na primeira iteração --&gt;
+    &lt;!-- forloop.last: True na última iteração --&gt;
+  &lt;/tr&gt;
+{% empty %}
+  &lt;!-- {% empty %}: exibido apenas se a lista estiver vazia --&gt;
+  &lt;tr&gt;&lt;td colspan="5"&gt;Nenhum médico cadastrado.&lt;/td&gt;&lt;/tr&gt;
+{% endfor %}
+
+
+&lt;!-- ── {% url %} — Gera URLs a partir do name ───────────────────────────── --&gt;
+
+&lt;a href="{% url 'intranet:medico-list' %}"&gt;Médicos&lt;/a&gt;
+&lt;a href="{% url 'intranet:medico-update' medico.pk %}"&gt;Editar&lt;/a&gt;
+&lt;a href="{% url 'login' %}"&gt;Login&lt;/a&gt;
+&lt;form action="{% url 'logout' %}"&gt;&lt;/form&gt;
+
+
+&lt;!-- ── {% static %} — Resolve caminho de arquivos estáticos ─────────────── --&gt;
+
+{% load static %}
+&lt;!-- OBRIGATÓRIO antes de usar {% static %} --&gt;
+
+&lt;link rel="stylesheet" href="{% static 'intranet/style.css' %}"&gt;
+&lt;img src="{% static 'intranet/assets/logo.svg' %}"&gt;
+&lt;img src="{% static 'intranet/assets/edit.svg' %}"&gt;
+
+
+&lt;!-- ── {% csrf_token %} — Token de segurança para formulários POST ────────── --&gt;
+
+&lt;form method="post"&gt;
+  {% csrf_token %}
+  &lt;!-- Gera um campo hidden com um token único:
+       &lt;input type="hidden" name="csrfmiddlewaretoken" value="abc123xyz..."&gt;
+  O Django verifica este token ao receber o POST.
+  Se estiver ausente ou inválido → erro 403 Forbidden.
+  SEMPRE necessário em formulários POST! --&gt;
+  ...
+&lt;/form&gt;
+
+
+&lt;!-- ── {% load %} — Carrega bibliotecas de tags ────────────────────────── --&gt;
+
+{% load static %}     &lt;!-- carrega tags: {% static %} --&gt;
+&lt;!-- Deve ser chamado em cada template que usa as tags, mesmo nos filhos --&gt;</code></pre>
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 16 ══════════════════════════════ -->
+  <section id="s16">
+    <div class="section-title">
+      <div class="snum tpl">16</div>
+      <h2>Filtros — Transformando variáveis no Template</h2>
+    </div>
+
+    <p>Filtros são modificadores aplicados a variáveis com o símbolo <code>|</code>. Eles transformam o valor antes de exibir — sem precisar de lógica na view.</p>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-tpl"></div>Filtros usados no projeto e outros úteis</div>
+      <pre><code class="language-markup">&lt;!-- Sintaxe: {{ variavel|filtro }} ou {{ variavel|filtro:argumento }} --&gt;
+
+
+&lt;!-- ── Filtros usados no projeto ──────────────────────────────────────────── --&gt;
+
+{{ consulta.horario|date:"d/m/Y H:i" }}
+&lt;!-- date: formata um objeto datetime --&gt;
+&lt;!-- "d/m/Y H:i" → ex: 20/05/2026 14:30 --&gt;
+&lt;!-- Outros formatos: "d/m/Y" → 20/05/2026 | "H:i" → 14:30 | "d \d\e F" → 20 de Maio --&gt;
+
+{{ request.user.get_full_name|default:request.user.username }}
+&lt;!-- default: usa o valor após | se o valor anterior for vazio/falsy --&gt;
+&lt;!-- Se get_full_name = "" → usa username; se = "João Silva" → usa "João Silva" --&gt;
+
+{{ medicos_json|escapejs }}
+&lt;!-- escapejs: escapa o valor para uso seguro dentro de strings JavaScript --&gt;
+&lt;!-- ex: aspas simples viram \', quebras de linha viram \n etc. --&gt;
+
+
+&lt;!-- ── Outros filtros úteis ────────────────────────────────────────────────── --&gt;
+
+{{ texto|upper }}          &lt;!-- MAIÚSCULAS --&gt;
+{{ texto|lower }}          &lt;!-- minúsculas --&gt;
+{{ texto|title }}          &lt;!-- Primeira Letra De Cada Palavra Em Maiúscula --&gt;
+{{ texto|capfirst }}       &lt;!-- Primeira letra maiúscula --&gt;
+
+{{ lista|length }}         &lt;!-- conta itens: {{ medicos|length }} → 5 --&gt;
+{{ lista|first }}          &lt;!-- primeiro item da lista --&gt;
+{{ lista|last }}           &lt;!-- último item --&gt;
+
+{{ numero|floatformat:2 }} &lt;!-- 3.14159 → "3.14" --&gt;
+
+{{ texto|truncatewords:10 }} &lt;!-- trunca após 10 palavras e adiciona "..." --&gt;
+{{ texto|linebreaks }}       &lt;!-- converte \n em &lt;p&gt; e &lt;br&gt; HTML --&gt;
+{{ html|safe }}              &lt;!-- renderiza HTML sem escapar (use com cuidado!) --&gt;
+
+{{ valor|yesno:"Sim,Não" }}  &lt;!-- True → "Sim", False → "Não" --&gt;
+{{ data|timesince }}         &lt;!-- "3 dias atrás", "2 horas atrás" etc. --&gt;</code></pre>
+    </div>
+
+    <div class="box box-aviso">
+      <strong>⚠️ Cuidado com o filtro |safe</strong>
+      <code>{{ conteudo|safe }}</code> desativa o escape automático do Django e renderiza HTML bruto. Nunca use em dados vindos do usuário sem sanitização — isso pode causar ataques XSS (injeção de scripts maliciosos).
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 17 ══════════════════════════════ -->
+  <section id="s17">
+    <div class="section-title">
+      <div class="snum tpl">17</div>
+      <h2>Formulários no Template — Renderizando o Form</h2>
+    </div>
+
+    <p>Quando uma view passa um formulário (<code>form</code>) no contexto, o template pode renderizá-lo de várias formas. No nosso projeto renderizamos campo por campo para controlar o layout com CSS.</p>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-tpl"></div>medico/formulario.html — renderização manual (usada no projeto)</div>
+      <pre><code class="language-markup">&lt;form method="post"&gt;
+  {% csrf_token %}
+
+  &lt;!-- Campo por campo: dá controle total sobre o HTML gerado --&gt;
+  &lt;div class="form-group"&gt;
+    &lt;label for="id_nome"&gt;Nome:&lt;/label&gt;
+
+    {{ form.nome }}
+    &lt;!-- ↑ renderiza o &lt;input type="text" name="nome" id="id_nome" ...&gt; --&gt;
+    &lt;!-- O Django gera id="id_NOME" automaticamente → bate com o for="id_nome" do label --&gt;
+
+    {% if form.nome.errors %}
+      &lt;p style="color:red;"&gt;{{ form.nome.errors }}&lt;/p&gt;
+      &lt;!-- form.nome.errors: lista de erros deste campo específico --&gt;
+      &lt;!-- ex: ["Este campo é obrigatório."] --&gt;
+    {% endif %}
+  &lt;/div&gt;
+
+  &lt;div class="form-group"&gt;
+    &lt;label for="id_especialidade"&gt;Especialidade:&lt;/label&gt;
+    {{ form.especialidade }}
+    &lt;!-- Para ChoiceField renderiza &lt;select&gt;&lt;option&gt;s&lt;/select&gt; --&gt;
+  &lt;/div&gt;
+
+  &lt;button type="submit" class="btn btn-primary"&gt;Salvar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+    </div>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-tpl"></div>Outras formas de renderizar (para referência)</div>
+      <pre><code class="language-markup">&lt;form method="post"&gt;
+  {% csrf_token %}
+
+  &lt;!-- Forma 1: renderização automática como parágrafos (mais rápida, menos controle) --&gt;
+  {{ form.as_p }}
+  &lt;!-- gera: &lt;p&gt;&lt;label&gt;Nome:&lt;/label&gt;&lt;input ...&gt;&lt;/p&gt; para cada campo --&gt;
+
+  &lt;!-- Forma 2: como tabela --&gt;
+  {{ form.as_table }}
+
+  &lt;!-- Forma 3: como lista --&gt;
+  {{ form.as_ul }}
+
+  &lt;!-- Forma 4: renderização manual COMPLETA (usada no projeto) --&gt;
+  {% for field in form %}
+    &lt;div class="form-group"&gt;
+      {{ field.label_tag }}   &lt;!-- &lt;label for="id_nome"&gt;Nome:&lt;/label&gt; --&gt;
+      {{ field }}             &lt;!-- o &lt;input&gt; ou &lt;select&gt; --&gt;
+      {{ field.errors }}      &lt;!-- erros de validação --&gt;
+    &lt;/div&gt;
+  {% endfor %}
+
+  &lt;button type="submit"&gt;Salvar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <!-- ══════════════════ SEÇÃO 18 ══════════════════════════════ -->
+  <section id="s18">
+    <div class="section-title">
+      <div class="snum ex">18</div>
+      <h2>Fluxo GET — Listagem de Médicos</h2>
+    </div>
+
+    <p>Veja o percurso completo quando o usuário clica em "Médicos" no menu. É o fluxo mais simples: apenas leitura do banco.</p>
+
+    <div class="steps-row">
+      <div class="step-item">
+        <span class="step step-url">1</span>
+        <p><strong>Browser envia:</strong> <code>GET /medicos/</code> com o cookie de sessão</p>
+      </div>
+      <div class="step-item">
+        <span class="step step-url">2</span>
+        <p><strong>sistema/urls.py</strong> → <code>include('intranet.urls')</code> delega para o app</p>
+      </div>
+      <div class="step-item">
+        <span class="step step-url">3</span>
+        <p><strong>intranet/urls.py</strong> → <code>path('medicos/', MedicoListView.as_view(), name='medico-list')</code> corresponde</p>
+      </div>
+      <div class="step-item">
+        <span class="step step-view">4</span>
+        <p><strong>LoginRequiredMixin</strong> verifica o cookie de sessão → usuário está logado → continua</p>
+      </div>
+      <div class="step-item">
+        <span class="step step-view">5</span>
+        <p><strong>get_queryset()</strong> executa: <code>Medico.objects.filter(ativo=True).order_by('nome')</code> → retorna lista de objetos Medico</p>
+      </div>
+      <div class="step-item">
+        <span class="step step-view">6</span>
+        <p><strong>ListView</strong> monta contexto: <code>{'medicos': [Medico#1, Medico#2, ...]}</code></p>
+      </div>
+      <div class="step-item">
+        <span class="step step-tpl">7</span>
+        <p><strong>medico/listagem.html</strong> é renderizado: <code>{% for medico in medicos %}</code> gera as linhas da tabela</p>
+      </div>
+      <div class="step-item">
+        <span class="step step-tpl">8</span>
+        <p><strong>HTML completo</strong> retorna ao browser com código HTTP 200</p>
+      </div>
+    </div>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-view"></div>O que o MedicoListView faz internamente (simplificado)</div>
+      <pre><code class="language-python"># Isso é o que o ListView faz "por baixo dos panos":
+def get(self, request, *args, **kwargs):
+    self.object_list = self.get_queryset()
+    # chama get_queryset() → retorna os médicos filtrados e ordenados
+
+    context = self.get_context_data()
+    # monta {'medicos': [...], 'is_paginated': False, ...}
+
+    return render(request, self.template_name, context)
+    # renderiza o template com o contexto</code></pre>
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 19 ══════════════════════════════ -->
+  <section id="s19">
+    <div class="section-title">
+      <div class="snum ex">19</div>
+      <h2>Fluxo GET — Abrindo o Formulário de Edição</h2>
+    </div>
+
+    <p>Quando o usuário clica em "Editar" ao lado de um médico, o browser acessa <code>/medicos/5/editar/</code>. Veja o que acontece:</p>
+
+    <div class="steps-row">
+      <div class="step-item">
+        <span class="step step-url">1</span>
+        <p><strong>Browser envia:</strong> <code>GET /medicos/5/editar/</code></p>
+      </div>
+      <div class="step-item">
+        <span class="step step-url">2</span>
+        <p><strong>intranet/urls.py</strong> → <code>path('medicos/&lt;int:pk&gt;/editar/', MedicoUpdateView...)</code> captura <code>pk=5</code></p>
+      </div>
+      <div class="step-item">
+        <span class="step step-view">3</span>
+        <p><strong>MedicoUpdateView</strong> recebe <code>kwargs={'pk': 5}</code></p>
+      </div>
+      <div class="step-item">
+        <span class="step step-view">4</span>
+        <p><strong>get_object()</strong> executa: <code>Medico.objects.get(pk=5)</code> → retorna o médico (ou HTTP 404 se não existir)</p>
+      </div>
+      <div class="step-item">
+        <span class="step step-view">5</span>
+        <p><strong>UpdateView</strong> pré-preenche o MedicoForm com os dados do objeto encontrado</p>
+      </div>
+      <div class="step-item">
+        <span class="step step-view">6</span>
+        <p><strong>get_context_data()</strong> → <code>{'form': &lt;form preenchido&gt;, 'object': &lt;Medico#5&gt;, 'titulo': 'Editar Médico'}</code></p>
+      </div>
+      <div class="step-item">
+        <span class="step step-tpl">7</span>
+        <p><strong>medico/formulario.html</strong> renderiza: <code>{{ form.nome }}</code> já vem com <code>value="João Silva"</code></p>
+      </div>
+    </div>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-tpl"></div>No template — usando a variável object (disponível no UpdateView)</div>
+      <pre><code class="language-markup">&lt;!-- Além de 'form' e 'titulo', o UpdateView também passa 'object' --&gt;
+&lt;!-- object = a instância do Model sendo editada --&gt;
+
+&lt;!-- Exemplo de uso em confirmar_exclusao.html: --&gt;
+&lt;p&gt;
+  Excluir o médico
+  &lt;strong&gt;{{ object.nome }} {{ object.sobrenome }}&lt;/strong&gt;?
+  &lt;!-- object.nome = "João", object.sobrenome = "Silva" --&gt;
+&lt;/p&gt;
+
+&lt;!-- O formulário de edição não precisa — o Django preenche os valores
+     automaticamente via o form pré-populado --&gt;</code></pre>
+    </div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 20 ══════════════════════════════ -->
+  <section id="s20">
+    <div class="section-title">
+      <div class="snum ex">20</div>
+      <h2>Fluxo POST — Salvando um Formulário</h2>
+    </div>
+
+    <p>Este é o fluxo mais complexo: o usuário preenche o formulário e clica em "Salvar". O browser envia os dados e a view precisa validá-los antes de salvar no banco.</p>
+
+    <div class="steps-row">
+      <div class="step-item">
+        <span class="step step-url">1</span>
+        <p><strong>Browser envia:</strong> <code>POST /medicos/novo/</code> com corpo: <code>nome=João&amp;email=joao@email.com&amp;crm=12345&amp;especialidade=ORTOPEDIA&amp;csrfmiddlewaretoken=abc...</code></p>
+      </div>
+      <div class="step-item">
+        <span class="step step-url">2</span>
+        <p><strong>Django verifica o CSRF token</strong> → válido → continua. Se inválido → retorna HTTP 403 Forbidden</p>
+      </div>
+      <div class="step-item">
+        <span class="step step-view">3</span>
+        <p><strong>MedicoCreateView.post()</strong> é chamado → instancia <code>MedicoForm(request.POST)</code></p>
+      </div>
+      <div class="step-item">
+        <span class="step step-view">4</span>
+        <p><strong>form.is_valid()</strong> → executa todas as validações: campos obrigatórios, formato de e-mail, tamanho máximo, choices válidos</p>
+      </div>
+      <div class="step-item">
+        <span class="step step-view">5a</span>
+        <p><strong>Se inválido:</strong> volta a renderizar o template com o form cheio de erros. O usuário vê as mensagens de erro em vermelho</p>
+      </div>
+      <div class="step-item">
+        <span class="step step-view">5b</span>
+        <p><strong>Se válido:</strong> <code>form.save()</code> → executa <code>INSERT INTO intranet_medico (...)</code> no banco</p>
+      </div>
+      <div class="step-item">
+        <span class="step step-url">6</span>
+        <p><strong>Redirect</strong> → <code>return redirect(success_url)</code> → HTTP 302 para <code>/medicos/</code></p>
+      </div>
+      <div class="step-item">
+        <span class="step step-tpl">7</span>
+        <p><strong>Browser faz novo GET /medicos/</strong> → listagem aparece com o novo médico incluído</p>
+      </div>
+    </div>
+
+    <div class="cb">
+      <div class="file-label"><div class="dot dot-view"></div>O que o CreateView faz internamente no POST (simplificado)</div>
+      <pre><code class="language-python">def post(self, request, *args, **kwargs):
+    # Instancia o form com os dados enviados pelo browser
+    form = self.form_class(request.POST)
+
+    if form.is_valid():
+        # Todos os campos passaram na validação
+        self.object = form.save()        # salva no banco → INSERT INTO
+        return redirect(self.success_url) # redireciona para /medicos/
+    else:
+        # Algum campo falhou na validação
+        # Re-renderiza o template COM OS ERROS — form.campo.errors fica preenchido
+        return render(request, self.template_name, {'form': form, ...})</code></pre>
+    </div>
+
+    <h3>Fluxo especial — Consulta com busca de paciente por CPF</h3>
+
+    <div class="flow"><span class="f-dim">POST /consultas/nova/ com cpf_paciente=12345678901</span>
+
+  <span class="f-view">ConsultaCreateView.post()</span>
+      ↓
+  ConsultaForm(request.POST)
+      ↓
+  form.is_valid() chama automaticamente:
+      → <span class="f-view">clean_cpf_paciente()</span>   ← método especial do ConsultaForm
+          cpf = '123.456.789-01'
+          cpf_limpo = '12345678901'           (remove . e -)
+          paciente = Paciente.objects.get(cpf=cpf_limpo, ativo=True)
+          → se encontrar: retorna objeto Paciente  → form.cleaned_data['cpf_paciente'] = Paciente#3
+          → se não encontrar: raise ValidationError('Paciente não encontrado')
+      ↓
+  form.save() chama:
+      → <span class="f-view">ConsultaForm.save()</span>      ← método sobrescrito
+          instance = super().save(commit=False)   (cria objeto sem salvar)
+          instance.paciente_id = cleaned_data['cpf_paciente']  (Paciente#3)
+          instance.save()                         (salva com o paciente correto)
+      ↓
+  redirect('/consultas/')  <span class="f-ok">✅</span></div>
+  </section>
+
+  <!-- ══════════════════ SEÇÃO 21 ══════════════════════════════ -->
+  <section id="s21">
+    <div class="section-title">
+      <div class="snum ex">21</div>
+      <h2>Mapa Completo do Projeto — URL → View → Template</h2>
+    </div>
+
+    <p>Referência rápida de todo o sistema: cada URL, a view que executa, e o template que renderiza.</p>
+
+    <table>
+      <tr>
+        <th>URL</th>
+        <th>View</th>
+        <th>Template</th>
+        <th>Protegido?</th>
+      </tr>
+      <tr>
+        <td><code>/</code></td>
+        <td><code>index()</code></td>
+        <td><code>intranet/index.html</code></td>
+        <td>Não</td>
+      </tr>
+      <tr>
+        <td><code>/login/</code></td>
+        <td><code>LoginView</code></td>
+        <td><code>intranet/login.html</code></td>
+        <td>Não</td>
+      </tr>
+      <tr>
+        <td><code>/logout/</code></td>
+        <td><code>LogoutView</code></td>
+        <td>— (só redirect)</td>
+        <td>Não</td>
+      </tr>
+      <tr>
+        <td><code>/home/</code></td>
+        <td><code>home()</code></td>
+        <td><code>intranet/home.html</code></td>
+        <td>✅ Login</td>
+      </tr>
+      <tr>
+        <td><code>/medicos/</code></td>
+        <td><code>MedicoListView</code></td>
+        <td><code>medico/listagem.html</code></td>
+        <td>✅ Login</td>
+      </tr>
+      <tr>
+        <td><code>/medicos/novo/</code></td>
+        <td><code>MedicoCreateView</code></td>
+        <td><code>medico/formulario.html</code></td>
+        <td>✅ Login</td>
+      </tr>
+      <tr>
+        <td><code>/medicos/&lt;pk&gt;/editar/</code></td>
+        <td><code>MedicoUpdateView</code></td>
+        <td><code>medico/formulario.html</code></td>
+        <td>✅ Login</td>
+      </tr>
+      <tr>
+        <td><code>/medicos/&lt;pk&gt;/excluir/</code></td>
+        <td><code>MedicoDeleteView</code></td>
+        <td><code>medico/confirmar_exclusao.html</code></td>
+        <td>✅ Login</td>
+      </tr>
+      <tr>
+        <td><code>/pacientes/</code></td>
+        <td><code>PacienteListView</code></td>
+        <td><code>paciente/listagem.html</code></td>
+        <td>✅ Login</td>
+      </tr>
+      <tr>
+        <td><code>/pacientes/novo/</code></td>
+        <td><code>PacienteCreateView</code></td>
+        <td><code>paciente/formulario.html</code></td>
+        <td>✅ Login</td>
+      </tr>
+      <tr>
+        <td><code>/pacientes/&lt;pk&gt;/editar/</code></td>
+        <td><code>PacienteUpdateView</code></td>
+        <td><code>paciente/formulario.html</code></td>
+        <td>✅ Login</td>
+      </tr>
+      <tr>
+        <td><code>/pacientes/&lt;pk&gt;/excluir/</code></td>
+        <td><code>PacienteDeleteView</code></td>
+        <td><code>paciente/confirmar_exclusao.html</code></td>
+        <td>✅ Login</td>
+      </tr>
+      <tr>
+        <td><code>/consultas/</code></td>
+        <td><code>ConsultaListView</code></td>
+        <td><code>consulta/listagem.html</code></td>
+        <td>✅ Login</td>
+      </tr>
+      <tr>
+        <td><code>/consultas/nova/</code></td>
+        <td><code>ConsultaCreateView</code></td>
+        <td><code>consulta/formulario.html</code></td>
+        <td>✅ Login</td>
+      </tr>
+      <tr>
+        <td><code>/consultas/&lt;pk&gt;/editar/</code></td>
+        <td><code>ConsultaUpdateView</code></td>
+        <td><code>consulta/formulario.html</code></td>
+        <td>✅ Login</td>
+      </tr>
+      <tr>
+        <td><code>/consultas/&lt;pk&gt;/excluir/</code></td>
+        <td><code>ConsultaDeleteView</code></td>
+        <td><code>consulta/confirmar_exclusao.html</code></td>
+        <td>✅ Login</td>
+      </tr>
+    </table>
+
+    <div class="box box-info">
+      <strong>✅ Padrão que se repete em todos os CRUDs</strong>
+      Cada entidade (Médico, Paciente, Consulta) segue exatamente o mesmo padrão: 4 URLs, 4 Views, 3 templates (formulario.html é compartilhado entre Create e Update). Aprendeu o padrão com médico → sabe como funciona paciente e consulta também.
+    </div>
+
+    <div style="text-align:center; margin-top:56px; padding-top:30px; border-top:1px solid var(--borda); color:#888; font-size:13px;">
+      <p>Apostila — Views, URLs e Templates no Django &nbsp;|&nbsp; Consulta.me</p>
+      <p style="margin-top:6px;">2025 © Desenvolvido por Aluno | Projeto fictício sem fins comerciais.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════════ Scripts ═════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+
+<script>
+  // Scrollspy — marca o item ativo na sidebar conforme rola a página
+  const sections = document.querySelectorAll('section[id]');
+  const links    = document.querySelectorAll('.sidebar nav a');
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.classList.remove('ativo'));
+        const a = document.querySelector(`.sidebar nav a[href="#${e.target.id}"]`);
+        if (a) a.classList.add('ativo');
+      }
+    });
+  }, { rootMargin: '-25% 0px -65% 0px' });
+
+  sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

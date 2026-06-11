@@ -1,0 +1,1950 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apostila — Sistema Médico com Django</title>
+
+  <!-- Prism.js para syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+
+  <style>
+    :root {
+      --azul-escuro: #092e20;
+      --azul-medio: #0c4b33;
+      --azul-claro: #44b78b;
+      --azul-suave: #e8f5f0;
+      --verde: #1e8449;
+      --amarelo: #ffc40d;
+      --vermelho: #c0392b;
+      --cinza-bg: #f4fbf7;
+      --cinza-borda: #d4ede3;
+      --texto: #0f1f17;
+      --sidebar-w: 280px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: var(--texto);
+      background: var(--cinza-bg);
+      line-height: 1.7;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--azul-escuro);
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .sidebar-header h1 {
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .sidebar-header p {
+      color: var(--azul-claro);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .sidebar nav { padding: 12px 0 40px; }
+
+    .nav-group-title {
+      color: rgba(255,255,255,0.4);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 16px 20px 4px;
+    }
+
+    .sidebar nav a {
+      display: block;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 7px 20px;
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .sidebar nav a:hover,
+    .sidebar nav a.ativo {
+      color: #fff;
+      background: rgba(68,183,139,0.15);
+      border-left-color: var(--azul-claro);
+    }
+
+    .sidebar nav a .num {
+      display: inline-block;
+      background: rgba(68,183,139,0.25);
+      color: var(--azul-claro);
+      font-size: 10px;
+      font-weight: 700;
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+      text-align: center;
+      border-radius: 4px;
+      margin-right: 8px;
+    }
+
+    /* ── Conteúdo ── */
+    .content {
+      margin-left: var(--sidebar-w);
+      padding: 0 0 80px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--azul-escuro) 0%, var(--azul-medio) 100%);
+      color: #fff;
+      padding: 60px 60px 50px;
+    }
+
+    .hero h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; }
+    .hero p  { font-size: 16px; opacity: 0.85; max-width: 600px; }
+
+    .badges { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .badge {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 50px 60px 10px;
+    }
+
+    section:first-of-type { padding-top: 40px; }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--cinza-borda);
+    }
+
+    .section-num {
+      background: var(--azul-claro);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      min-width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+    }
+
+    .section-title h2 {
+      font-size: 22px;
+      color: var(--azul-escuro);
+    }
+
+    h3 {
+      font-size: 16px;
+      color: var(--azul-medio);
+      margin: 28px 0 10px;
+      padding-left: 12px;
+      border-left: 3px solid var(--azul-claro);
+    }
+
+    p { margin-bottom: 14px; font-size: 15px; }
+
+    /* ── Caixas informativas ── */
+    .box {
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+    .box-dica   { background: #eaf6fb; border-left: 4px solid #2980b9; }
+    .box-aviso  { background: #fef9e7; border-left: 4px solid var(--amarelo); }
+    .box-info   { background: #eafaf1; border-left: 4px solid var(--verde); }
+    .box-erro   { background: #fdedec; border-left: 4px solid var(--vermelho); }
+    .box strong { font-weight: 700; display: block; margin-bottom: 4px; }
+
+    /* ── Blocos de código ── */
+    .arquivo-label {
+      background: var(--azul-escuro);
+      color: #a0c4e8;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 8px 8px 0 0;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .arquivo-label .icone { color: var(--azul-claro); }
+
+    pre[class*="language-"] {
+      margin: 0 !important;
+      border-radius: 0 0 8px 8px !important;
+      font-size: 13px !important;
+    }
+
+    .code-block { margin: 20px 0; border-radius: 8px; overflow: hidden; }
+
+    /* ── Tabelas ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    th {
+      background: var(--azul-escuro);
+      color: #fff;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--cinza-borda);
+    }
+
+    tr:nth-child(even) td { background: var(--azul-suave); }
+
+    code:not([class]) {
+      background: #e8eaf0;
+      color: #c0392b;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .diagrama {
+      background: #092e20;
+      color: #a8d5c2;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      padding: 24px;
+      border-radius: 8px;
+      margin: 20px 0;
+      line-height: 1.8;
+      white-space: pre;
+    }
+
+    .diagrama .dest { color: var(--azul-claro); font-weight: 700; }
+    .diagrama .verde { color: #6dbf67; }
+    .diagrama .amarelo { color: #ffd700; }
+
+    hr.divisor {
+      border: none;
+      border-top: 1px solid var(--cinza-borda);
+      margin: 40px 0;
+    }
+
+    /* Scrollbar sidebar */
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .content { margin-left: 0; }
+      section { padding: 30px 24px 10px; }
+      .hero { padding: 40px 24px 30px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════ SIDEBAR ════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>Sistema Médico<br>com Django</h1>
+    <p>Apostila Completa — Consulta.me</p>
+  </div>
+  <nav>
+    <div class="nav-group-title">Introdução</div>
+    <a href="#s1"><span class="num">1</span> O que é Django?</a>
+    <a href="#s2"><span class="num">2</span> Estrutura do Projeto</a>
+
+    <div class="nav-group-title">Base do Sistema</div>
+    <a href="#s3"><span class="num">3</span> Models — Banco de Dados</a>
+    <a href="#s4"><span class="num">4</span> Admin — Painel</a>
+    <a href="#s5"><span class="num">5</span> Migrations</a>
+    <a href="#s6"><span class="num">6</span> Settings</a>
+
+    <div class="nav-group-title">Rotas & Lógica</div>
+    <a href="#s7"><span class="num">7</span> URLs — Roteamento</a>
+    <a href="#s8"><span class="num">8</span> Forms — Formulários</a>
+    <a href="#s9"><span class="num">9</span> Views — A Lógica</a>
+
+    <div class="nav-group-title">Interface</div>
+    <a href="#s10"><span class="num">10</span> Templates — Base</a>
+    <a href="#s11"><span class="num">11</span> Templates — Login</a>
+    <a href="#s12"><span class="num">12</span> Templates — Médico</a>
+    <a href="#s13"><span class="num">13</span> Templates — Paciente</a>
+    <a href="#s14"><span class="num">14</span> Templates — Consulta</a>
+    <a href="#s15"><span class="num">15</span> Arquivos Estáticos</a>
+
+    <div class="nav-group-title">Finalização</div>
+    <a href="#s16"><span class="num">16</span> Autenticação</a>
+    <a href="#s17"><span class="num">17</span> Fluxo Completo</a>
+  </nav>
+</aside>
+
+<!-- ═════════════════════════════== CONTEÚDO ════════════════════════════════ -->
+<main class="content">
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>Consulta.me — Sistema Médico com Django</h1>
+    <p>Apostila completa do projeto: do banco de dados ao frontend integrado, passo a passo com explicação de cada linha de código.</p>
+    <div class="badges">
+      <span class="badge">Python 3.14</span>
+      <span class="badge">Django 5.2</span>
+      <span class="badge">SQLite</span>
+      <span class="badge">HTML + CSS</span>
+      <span class="badge">Autenticação</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ SEÇÃO 1 ══════════════════════════════════ -->
+  <section id="s1">
+    <div class="section-title">
+      <div class="section-num">1</div>
+      <h2>O que é Django?</h2>
+    </div>
+
+    <p>Django é um framework web escrito em Python que segue o padrão arquitetural <strong>MVT (Model – View – Template)</strong>. Ele resolve os problemas mais comuns no desenvolvimento web (banco de dados, autenticação, formulários, roteamento) de forma automática, para que você foque na lógica do seu projeto.</p>
+
+    <table>
+      <tr><th>Camada</th><th>Responsabilidade</th><th>No nosso projeto</th></tr>
+      <tr><td><strong>Model</strong></td><td>Define a estrutura do banco de dados</td><td><code>intranet/models.py</code></td></tr>
+      <tr><td><strong>View</strong></td><td>Recebe a requisição, processa e retorna a resposta</td><td><code>intranet/views.py</code></td></tr>
+      <tr><td><strong>Template</strong></td><td>A interface HTML exibida ao usuário</td><td><code>intranet/templates/</code></td></tr>
+    </table>
+
+    <div class="box box-dica">
+      <strong>💡 Como funciona uma requisição no Django?</strong>
+      O navegador acessa uma URL → Django encontra a View correspondente nas URLs → a View consulta os Models (banco) → a View renderiza um Template com os dados → o HTML é devolvido ao navegador.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 2 ══════════════════════════════════ -->
+  <section id="s2">
+    <div class="section-title">
+      <div class="section-num">2</div>
+      <h2>Estrutura do Projeto</h2>
+    </div>
+
+    <p>Um projeto Django é composto por um <strong>projeto</strong> (configurações globais) e um ou mais <strong>apps</strong> (módulos de funcionalidade). No nosso caso:</p>
+
+    <div class="diagrama"><span class="dest">sistema_medico_django/</span>          ← pasta raiz do projeto
+│
+├── <span class="dest">sistema/</span>                           ← pacote de configurações do projeto
+│   ├── settings.py                    ← configurações globais (banco, apps, etc.)
+│   ├── urls.py                        ← roteamento global de URLs
+│   ├── wsgi.py                        ← ponto de entrada para servidores web
+│   └── asgi.py                        ← suporte a conexões assíncronas
+│
+├── <span class="verde">intranet/</span>                          ← nosso app principal
+│   ├── migrations/                    ← arquivos gerados de migração de banco
+│   ├── templates/                     ← arquivos HTML (templates Django)
+│   │   └── intranet/
+│   │       ├── base.html              ← template base (layout comum)
+│   │       ├── base_logado.html       ← layout para usuários autenticados
+│   │       ├── index.html / home.html
+│   │       ├── login.html
+│   │       ├── medico/
+│   │       ├── paciente/
+│   │       └── consulta/
+│   ├── static/                        ← arquivos estáticos (CSS, imagens)
+│   │   └── intranet/
+│   │       ├── style.css
+│   │       └── assets/
+│   ├── models.py                      ← define as tabelas do banco de dados
+│   ├── views.py                       ← lógica de cada página
+│   ├── forms.py                       ← formulários de entrada de dados
+│   ├── urls.py                        ← rotas do app
+│   └── admin.py                       ← configuração do painel admin
+│
+├── <span class="amarelo">apostila/</span>                          ← esta apostila
+├── db.sqlite3                         ← banco de dados SQLite (arquivo)
+└── manage.py                          ← utilitário de linha de comando do Django</div>
+
+    <div class="box box-info">
+      <strong>✅ Por que separar em "projeto" e "app"?</strong>
+      O projeto (<code>sistema/</code>) guarda configurações globais. O app (<code>intranet/</code>) contém a lógica real. Isso permite reutilizar apps em outros projetos e manter o código organizado.
+    </div>
+
+    <h3>Comandos iniciais para recriar o projeto do zero</h3>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">$</span> Terminal</div>
+      <pre><code class="language-bash"># Cria o ambiente virtual Python
+python -m venv .venv
+
+# Ativa o ambiente virtual (macOS/Linux)
+source .venv/bin/activate
+
+# Instala o Django no ambiente isolado
+pip install django pillow
+
+# Cria o projeto chamado "sistema" na pasta atual
+django-admin startproject sistema .
+
+# Cria o app chamado "intranet" dentro do projeto
+python manage.py startapp intranet
+
+# Sobe o servidor de desenvolvimento
+python manage.py runserver</code></pre>
+    </div>
+
+    <div class="box box-aviso">
+      <strong>⚠️ Atenção ao ponto no startproject</strong>
+      O <code>.</code> no final de <code>startproject sistema .</code> diz ao Django para criar os arquivos na pasta atual, evitando uma pasta extra desnecessária.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 3 ══════════════════════════════════ -->
+  <section id="s3">
+    <div class="section-title">
+      <div class="section-num">3</div>
+      <h2>Models — O Banco de Dados</h2>
+    </div>
+
+    <p>Um <strong>Model</strong> é uma classe Python que representa uma tabela no banco de dados. Cada atributo da classe corresponde a uma coluna da tabela. O Django converte automaticamente essas classes em SQL.</p>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">🐍</span> intranet/models.py</div>
+      <pre><code class="language-python">from django.utils import timezone  # fornece data/hora com fuso horário correto
+from django.db import models       # módulo principal dos models do Django
+
+
+# ─── TABELA: medico ───────────────────────────────────────────────────────────
+class Medico(models.Model):        # herda de Model → vira tabela no banco
+
+    nome        = models.CharField(max_length=30)   # texto curto, até 30 caracteres
+    sobrenome   = models.CharField(max_length=30)   # texto curto, até 30 caracteres
+    email       = models.EmailField()               # valida formato de e-mail automaticamente
+    criacao_data= models.DateTimeField(             # data/hora de quando o registro foi criado
+                      default=timezone.now)         # valor padrão = momento atual
+    telefone    = models.CharField(max_length=15)   # string (pode ter traços e parênteses)
+    crm         = models.CharField(max_length=6)    # código de registro médico (até 6 dígitos)
+    especialidade = models.CharField(max_length=20) # ex: ORTOPEDIA, CARDIOLOGIA
+    ativo       = models.BooleanField(default=True) # True/False — se o médico está ativo
+    mensagem    = models.TextField(blank=True)      # texto longo, opcional (blank=True)
+    imagem      = models.ImageField(                # campo de upload de imagem
+                      upload_to='img/%Y/%m',        # salva em media/img/ANO/MES/
+                      blank=True)                   # opcional: médico pode não ter foto
+
+    def __str__(self):             # define como o objeto aparece no admin e no terminal
+        return f'{self.nome} {self.sobrenome}'  # ex: "João Silva"
+
+
+# ─── TABELA: paciente ─────────────────────────────────────────────────────────
+class Paciente(models.Model):
+
+    nome         = models.CharField(max_length=50)
+    sobrenome    = models.CharField(max_length=50)
+    email        = models.EmailField()
+    telefone     = models.CharField(max_length=15)
+    cpf          = models.CharField(max_length=11)  # 11 dígitos sem formatação
+    criacao_data = models.DateTimeField(default=timezone.now)
+    mensagem     = models.TextField(blank=True)
+    ativo        = models.BooleanField(default=True)
+    imagem       = models.ImageField(upload_to='img/%Y/%m', blank=True)
+
+    def __str__(self):
+        return f'{self.nome} {self.sobrenome}'
+
+
+# ─── TABELA: consulta ─────────────────────────────────────────────────────────
+class Consulta(models.Model):
+
+    # ForeignKey cria um relacionamento "muitos para um" (N:1)
+    # on_delete=CASCADE: se o paciente for deletado, a consulta também é deletada
+    paciente_id = models.ForeignKey(Paciente, on_delete=models.CASCADE)
+    medico_id   = models.ForeignKey(Medico,   on_delete=models.CASCADE)
+
+    horario     = models.DateTimeField(default=timezone.now)   # data/hora da consulta
+    observacao  = models.TextField(blank=True)                 # anotação opcional
+
+    # choices: lista de opções válidas para o campo
+    # formato: lista de tuplas (valor_no_banco, texto_exibido)
+    status = models.CharField(
+        default='A',    # valor padrão ao criar a consulta
+        max_length=1,   # salva apenas 1 caractere no banco (A, X, C ou R)
+        choices=(
+            ('A', 'Agendada'),
+            ('X', 'Cancelada'),
+            ('C', 'Confirmada'),
+            ('R', 'Realizada'),
+        )
+    )
+
+    def __str__(self):
+        return f'Consulta {self.get_status_display()} — {self.paciente_id}'
+        # get_status_display() retorna o texto legível (ex: "Agendada"), não o código ("A")</code></pre>
+    </div>
+
+    <h3>Tipos de campos mais usados</h3>
+    <table>
+      <tr><th>Campo</th><th>Tipo Python</th><th>Uso típico</th></tr>
+      <tr><td><code>CharField</code></td><td>str</td><td>Nome, telefone, CEP — textos curtos com limite definido</td></tr>
+      <tr><td><code>TextField</code></td><td>str</td><td>Descrições longas, observações — sem limite definido</td></tr>
+      <tr><td><code>EmailField</code></td><td>str</td><td>E-mail — valida o formato automaticamente</td></tr>
+      <tr><td><code>IntegerField</code></td><td>int</td><td>Números inteiros</td></tr>
+      <tr><td><code>BooleanField</code></td><td>bool</td><td>Ativo/inativo, verdadeiro/falso</td></tr>
+      <tr><td><code>DateTimeField</code></td><td>datetime</td><td>Data e hora</td></tr>
+      <tr><td><code>ImageField</code></td><td>str (caminho)</td><td>Upload de imagem — exige Pillow instalado</td></tr>
+      <tr><td><code>ForeignKey</code></td><td>objeto</td><td>Relacionamento N:1 com outra tabela</td></tr>
+    </table>
+
+    <div class="box box-dica">
+      <strong>💡 ForeignKey — Chave Estrangeira</strong>
+      Quando escrevemos <code>paciente_id = models.ForeignKey(Paciente, ...)</code>, estamos dizendo: "cada consulta pertence a um paciente". O Django cria automaticamente uma coluna <code>paciente_id_id</code> no banco que armazena o <strong>ID do paciente</strong>. No Python, <code>consulta.paciente_id</code> retorna o objeto Paciente completo.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 4 ══════════════════════════════════ -->
+  <section id="s4">
+    <div class="section-title">
+      <div class="section-num">4</div>
+      <h2>Admin — Painel Administrativo</h2>
+    </div>
+
+    <p>O Django vem com um painel administrativo pronto em <code>/admin/</code>. Para que nossos models apareçam lá, precisamos <strong>registrá-los</strong> no arquivo <code>admin.py</code>.</p>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">🐍</span> intranet/admin.py</div>
+      <pre><code class="language-python">from django.contrib import admin   # importa o módulo admin do Django
+from intranet import models        # importa nossos models para registrar
+
+
+# @admin.register é um decorator: conecta a classe AdminConfig ao model Medico
+@admin.register(models.Medico)
+class MedicoAdmin(admin.ModelAdmin):
+
+    # list_display: define quais colunas aparecem na listagem do admin
+    list_display = ('id', 'nome', 'email', 'telefone', 'especialidade', 'ativo')
+    #               ↑ ID   ↑ Nome  ↑ E-mail  ↑ Telefone  ↑ Especialidade ↑ Ativo?
+
+
+@admin.register(models.Paciente)
+class PacienteAdmin(admin.ModelAdmin):
+
+    list_display = ('id', 'nome', 'email', 'telefone', 'ativo')
+
+
+@admin.register(models.Consulta)
+class ConsultaAdmin(admin.ModelAdmin):
+
+    # paciente_id e medico_id são ForeignKeys: o admin exibe o __str__ deles
+    list_display = ('id', 'paciente_id', 'medico_id', 'status')</code></pre>
+    </div>
+
+    <div class="box box-info">
+      <strong>✅ Como criar o usuário administrador</strong>
+      Execute no terminal: <code>python manage.py createsuperuser</code>. O Django pedirá nome de usuário, e-mail e senha. Depois acesse <code>http://127.0.0.1:8000/admin/</code>.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 5 ══════════════════════════════════ -->
+  <section id="s5">
+    <div class="section-title">
+      <div class="section-num">5</div>
+      <h2>Migrations — Versionamento do Banco</h2>
+    </div>
+
+    <p>As <strong>migrations</strong> são arquivos Python gerados automaticamente que descrevem as alterações no banco de dados. Em vez de escrever SQL manualmente, você edita os models e o Django gera o SQL por você.</p>
+
+    <div class="diagrama"><span class="dest">Fluxo de migrations:</span>
+
+  Você edita         Django gera          Django aplica
+  models.py    →    makemigrations   →    migrate
+                    (cria arquivo)         (executa SQL)</div>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">$</span> Terminal</div>
+      <pre><code class="language-bash"># Analisa os models e gera o arquivo de migration (não altera o banco ainda)
+python manage.py makemigrations
+
+# Aplica todas as migrations pendentes no banco de dados
+python manage.py migrate
+
+# Para ver o SQL que será executado (útil para aprender):
+python manage.py sqlmigrate intranet 0001</code></pre>
+    </div>
+
+    <p>O Django gerou o arquivo <code>intranet/migrations/0001_initial.py</code> automaticamente. Veja o que ele contém:</p>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">🐍</span> intranet/migrations/0001_initial.py (gerado automaticamente)</div>
+      <pre><code class="language-python">from django.db import migrations, models
+import django.db.models.deletion
+import django.utils.timezone
+
+
+class Migration(migrations.Migration):
+
+    initial = True   # marca como a primeira migration do app
+
+    dependencies = [] # lista de migrations que precisam rodar antes desta
+
+    operations = [
+        # CreateModel: cria a tabela "intranet_medico" no banco
+        migrations.CreateModel(
+            name='Medico',
+            fields=[
+                # Django cria o campo "id" automaticamente (BigAutoField = inteiro longo)
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, ...)),
+                ('nome',        models.CharField(max_length=30)),
+                ('sobrenome',   models.CharField(max_length=30)),
+                ('email',       models.EmailField(max_length=254)),
+                ('criacao_data',models.DateTimeField(default=django.utils.timezone.now)),
+                ('telefone',    models.CharField(max_length=15)),
+                ('crm',         models.CharField(max_length=6)),
+                ('especialidade', models.CharField(max_length=20)),
+                ('ativo',       models.BooleanField(default=True)),
+                ('mensagem',    models.TextField(blank=True)),
+                ('imagem',      models.ImageField(blank=True, upload_to='img/%Y/%m')),
+            ],
+        ),
+        # ... (Paciente e Consulta seguem o mesmo padrão)
+    ]</code></pre>
+    </div>
+
+    <div class="box box-aviso">
+      <strong>⚠️ Nunca edite arquivos de migration manualmente</strong>
+      Esses arquivos são gerados pelo Django e formam um histórico. Editar à mão pode corromper o banco. Se precisar alterar um model, edite o <code>models.py</code> e rode <code>makemigrations</code> novamente.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 6 ══════════════════════════════════ -->
+  <section id="s6">
+    <div class="section-title">
+      <div class="section-num">6</div>
+      <h2>Settings — Configurações do Projeto</h2>
+    </div>
+
+    <p>O arquivo <code>settings.py</code> é o centro de controle do Django. Aqui definimos tudo: quais apps estão instalados, onde ficam os templates, como funciona o banco de dados, idioma, fuso horário, e muito mais.</p>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">🐍</span> sistema/settings.py</div>
+      <pre><code class="language-python">from pathlib import Path
+
+# BASE_DIR é o caminho absoluto da pasta raiz do projeto
+# Path(__file__) → caminho deste arquivo (settings.py)
+# .resolve()     → converte para caminho absoluto
+# .parent.parent → sobe duas pastas (settings.py → sistema/ → sistema_medico_django/)
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+# ─── Segurança ────────────────────────────────────────────────────────────────
+SECRET_KEY = 'django-insecure-...'  # chave criptográfica — troque em produção!
+DEBUG = True                        # True = modo desenvolvedor (exibe erros detalhados)
+ALLOWED_HOSTS = []                  # domínios permitidos — em produção adicione o seu domínio
+
+
+# ─── Apps instalados ──────────────────────────────────────────────────────────
+INSTALLED_APPS = [
+    'django.contrib.admin',         # painel administrativo em /admin/
+    'django.contrib.auth',          # sistema de autenticação (login/logout/usuários)
+    'django.contrib.contenttypes',  # framework de tipos de conteúdo (necessário para permissões)
+    'django.contrib.sessions',      # sistema de sessões (mantém usuário logado)
+    'django.contrib.messages',      # mensagens flash (ex: "Salvo com sucesso!")
+    'django.contrib.staticfiles',   # gerenciamento de arquivos estáticos (CSS, JS, img)
+    'intranet',                     # nosso app personalizado — OBRIGATÓRIO adicionar aqui
+]
+
+
+# ─── Templates ────────────────────────────────────────────────────────────────
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],  # pasta global de templates (opcional)
+        'APP_DIRS': True,                  # True: procura templates dentro de cada app/templates/
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',  # disponibiliza request nos templates
+                'django.contrib.auth.context_processors.auth', # disponibiliza user nos templates
+                'django.contrib.messages.context_processors.messages', # mensagens flash
+            ],
+        },
+    },
+]
+
+
+# ─── Banco de dados ───────────────────────────────────────────────────────────
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3', # motor: SQLite (arquivo único, ideal p/ aprendizado)
+        'NAME': BASE_DIR / 'db.sqlite3',         # caminho do arquivo de banco
+    }
+}
+
+
+# ─── Internacionalização ──────────────────────────────────────────────────────
+LANGUAGE_CODE = 'pt-br'               # idioma da interface do admin
+TIME_ZONE = 'America/Sao_Paulo'       # fuso horário do servidor
+USE_I18N = True                        # ativa internacionalização
+USE_TZ = True                          # armazena datas com fuso horário (recomendado)
+
+
+# ─── Arquivos estáticos (CSS, JS, imagens do projeto) ─────────────────────────
+STATIC_URL = 'static/'   # URL pública para acessar estáticos (ex: /static/intranet/style.css)
+
+
+# ─── Arquivos de mídia (uploads feitos pelo usuário) ──────────────────────────
+MEDIA_URL  = '/media/'           # URL pública dos uploads
+MEDIA_ROOT = BASE_DIR / 'media'  # pasta física onde os uploads são salvos
+
+
+# ─── Autenticação ─────────────────────────────────────────────────────────────
+LOGIN_URL           = '/login/'   # para onde redirecionar se não estiver logado
+LOGIN_REDIRECT_URL  = '/home/'    # para onde ir após login bem-sucedido
+LOGOUT_REDIRECT_URL = '/'         # para onde ir após logout
+
+
+# ─── Chave primária padrão ────────────────────────────────────────────────────
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'  # tipo do campo "id" gerado automaticamente</code></pre>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 7 ══════════════════════════════════ -->
+  <section id="s7">
+    <div class="section-title">
+      <div class="section-num">7</div>
+      <h2>URLs — O Sistema de Roteamento</h2>
+    </div>
+
+    <p>O Django usa um sistema de roteamento baseado em expressões — cada URL é mapeada para uma View. Temos dois arquivos de URLs: o <strong>global</strong> (<code>sistema/urls.py</code>) que distribui as rotas para os apps, e o <strong>do app</strong> (<code>intranet/urls.py</code>) que define as rotas específicas.</p>
+
+    <div class="diagrama"><span class="dest">Fluxo de URLs:</span>
+
+  Navegador           sistema/urls.py         intranet/urls.py       View
+  acessa          →   roteia para        →    encontra a rota   →    executa
+  /medicos/           include(intranet)        medico-list            e retorna HTML</div>
+
+    <h3>URLs globais do projeto</h3>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">🐍</span> sistema/urls.py</div>
+      <pre><code class="language-python">from django.contrib import admin
+from django.contrib.auth import views as auth_views  # views prontas de login/logout do Django
+from django.urls import path, include               # path() cria rotas, include() delega para outro arquivo
+from django.conf import settings
+from django.conf.urls.static import static          # serve arquivos de mídia em desenvolvimento
+
+urlpatterns = [
+    # Painel administrativo — sempre disponível em /admin/
+    path('admin/', admin.site.urls),
+
+    # Login: usa a LoginView pronta do Django, mas com nosso template personalizado
+    path('login/',  auth_views.LoginView.as_view(template_name='intranet/login.html'), name='login'),
+
+    # Logout: redireciona para LOGOUT_REDIRECT_URL definido no settings.py
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+
+    # Inclui todas as rotas do app intranet (definidas em intranet/urls.py)
+    # Tudo que não é admin/login/logout vai para o app intranet
+    path('', include('intranet.urls')),
+
+# static(): em DEBUG=True, serve os arquivos de /media/ (uploads do usuário)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)</code></pre>
+    </div>
+
+    <h3>URLs do app intranet</h3>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">🐍</span> intranet/urls.py</div>
+      <pre><code class="language-python">from django.urls import path
+from . import views   # importa as views do mesmo diretório (intranet/views.py)
+
+# app_name define o namespace — evita conflito de nomes entre apps diferentes
+# uso nos templates: {% url 'intranet:medico-list' %}
+app_name = 'intranet'
+
+urlpatterns = [
+
+    # ─── Páginas iniciais ─────────────────────────────────────────────────────
+    path('',      views.index, name='index'),   # /        → landing page (não logado)
+    path('home/', views.home,  name='home'),    # /home/   → página inicial (logado)
+
+    # ─── CRUD de Médicos ──────────────────────────────────────────────────────
+    path('medicos/',                   views.MedicoListView.as_view(),   name='medico-list'),
+    #    /medicos/  → lista todos os médicos ativos
+
+    path('medicos/novo/',              views.MedicoCreateView.as_view(), name='medico-create'),
+    #    /medicos/novo/  → formulário para cadastrar novo médico
+
+    path('medicos/&lt;int:pk&gt;/editar/',  views.MedicoUpdateView.as_view(), name='medico-update'),
+    #    /medicos/5/editar/  → formulário para editar médico com id=5
+    #    &lt;int:pk&gt; é um parâmetro dinâmico: captura o número e passa para a view como "pk"
+
+    path('medicos/&lt;int:pk&gt;/excluir/', views.MedicoDeleteView.as_view(), name='medico-delete'),
+    #    /medicos/5/excluir/  → página de confirmação para deletar médico com id=5
+
+    # ─── CRUD de Pacientes ────────────────────────────────────────────────────
+    path('pacientes/',                   views.PacienteListView.as_view(),   name='paciente-list'),
+    path('pacientes/novo/',              views.PacienteCreateView.as_view(), name='paciente-create'),
+    path('pacientes/&lt;int:pk&gt;/editar/',  views.PacienteUpdateView.as_view(), name='paciente-update'),
+    path('pacientes/&lt;int:pk&gt;/excluir/', views.PacienteDeleteView.as_view(), name='paciente-delete'),
+
+    # ─── CRUD de Consultas ────────────────────────────────────────────────────
+    path('consultas/',                   views.ConsultaListView.as_view(),   name='consulta-list'),
+    path('consultas/nova/',              views.ConsultaCreateView.as_view(), name='consulta-create'),
+    path('consultas/&lt;int:pk&gt;/editar/',  views.ConsultaUpdateView.as_view(), name='consulta-update'),
+    path('consultas/&lt;int:pk&gt;/excluir/', views.ConsultaDeleteView.as_view(), name='consulta-delete'),
+]</code></pre>
+    </div>
+
+    <div class="box box-dica">
+      <strong>💡 Por que usar namespace?</strong>
+      Se você tiver dois apps com uma rota chamada <code>list</code>, o Django não saberia qual usar. Com <code>app_name = 'intranet'</code>, chamamos <code>{% url 'intranet:medico-list' %}</code> — sem ambiguidade.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 8 ══════════════════════════════════ -->
+  <section id="s8">
+    <div class="section-title">
+      <div class="section-num">8</div>
+      <h2>Forms — Formulários</h2>
+    </div>
+
+    <p>Os <strong>Forms</strong> do Django validam e processam os dados enviados pelo usuário. Um <code>ModelForm</code> é um formulário gerado automaticamente a partir de um Model — ele sabe quais campos existem, quais são obrigatórios e como validar cada tipo.</p>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">🐍</span> intranet/forms.py</div>
+      <pre><code class="language-python">from django import forms
+from .models import Medico, Paciente, Consulta  # importa nossos models
+
+
+# Lista de especialidades disponíveis (formato: tupla valor, texto)
+# O mesmo valor é armazenado no banco E exibido no dropdown
+ESPECIALIDADES = [
+    ('CARDIOLOGIA',  'Cardiologia'),
+    ('DERMATOLOGIA', 'Dermatologia'),
+    ('GINECOLOGIA',  'Ginecologia'),
+    ('NEUROLOGIA',   'Neurologia'),
+    ('OFTALMOLOGIA', 'Oftalmologia'),
+    ('ORTOPEDIA',    'Ortopedia'),
+    ('PEDIATRIA',    'Pediatria'),
+]
+
+
+# ─── Formulário de Médico ─────────────────────────────────────────────────────
+class MedicoForm(forms.ModelForm):  # ModelForm = form gerado a partir de um Model
+
+    # Substituímos o CharField padrão por um ChoiceField com opções fixas
+    especialidade = forms.ChoiceField(
+        choices=[('', 'Selecione uma especialidade')] + ESPECIALIDADES,
+        # [('','')] + ESPECIALIDADES = adiciona opção vazia no início da lista
+        label='Especialidade',
+    )
+
+    class Meta:         # classe interna que configura o ModelForm
+        model  = Medico # qual model este form representa
+        fields = ['nome', 'sobrenome', 'email', 'telefone', 'crm', 'especialidade']
+        # fields: lista APENAS os campos que o usuário pode preencher
+        # campos não listados (ex: criacao_data, ativo) são preenchidos automaticamente
+        labels = {      # textos dos rótulos exibidos no HTML
+            'nome':         'Nome',
+            'sobrenome':    'Sobrenome',
+            'email':        'E-mail',
+            'telefone':     'Telefone',
+            'crm':          'CRM',
+        }
+
+
+# ─── Formulário de Paciente ───────────────────────────────────────────────────
+class PacienteForm(forms.ModelForm):
+
+    class Meta:
+        model  = Paciente
+        fields = ['nome', 'sobrenome', 'email', 'telefone', 'cpf']
+        labels = {
+            'nome':      'Nome',
+            'sobrenome': 'Sobrenome',
+            'email':     'E-mail',
+            'telefone':  'Telefone',
+            'cpf':       'CPF',
+        }
+
+
+# ─── Formulário de Consulta ───────────────────────────────────────────────────
+class ConsultaForm(forms.ModelForm):
+
+    # Campo extra (não existe no model): usado para filtrar médicos por especialidade
+    especialidade = forms.ChoiceField(
+        choices=[('', 'Selecione uma especialidade')] + ESPECIALIDADES,
+        required=False,   # não obrigatório — só serve para filtrar no frontend
+        label='Especialidade',
+    )
+
+    # Campo extra: recebe o CPF digitado e busca o paciente no banco
+    cpf_paciente = forms.CharField(
+        max_length=14,
+        label='CPF do Paciente',
+        widget=forms.TextInput(attrs={'placeholder': 'Digite o CPF do paciente'}),
+        # widget: define o tipo de elemento HTML — TextInput vira &lt;input type="text"&gt;
+    )
+
+    class Meta:
+        model  = Consulta
+        fields = ['medico_id', 'horario', 'observacao']
+        # Não inclui paciente_id aqui — vamos preencher via CPF no clean/save
+        labels = {
+            'medico_id':  'Médico',
+            'horario':    'Data e Hora',
+            'observacao': 'Observação',
+        }
+        widgets = {
+            # DateTimeInput com type="datetime-local" exibe um seletor de data/hora no browser
+            'horario': forms.DateTimeInput(
+                attrs={'type': 'datetime-local'},
+                format='%Y-%m-%dT%H:%M',   # formato esperado pelo input HTML
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        # __init__ é chamado ao instanciar o form — podemos personalizar aqui
+        super().__init__(*args, **kwargs)
+
+        # Filtra apenas médicos ativos no dropdown
+        self.fields['medico_id'].queryset = Medico.objects.filter(ativo=True).order_by('nome')
+        self.fields['medico_id'].empty_label = 'Selecione um médico'
+        self.fields['observacao'].required = False   # torna observação opcional
+
+        # Se está editando uma consulta existente, formata a data para o input HTML
+        if self.instance.pk and self.instance.horario:
+            self.initial['horario'] = self.instance.horario.strftime('%Y-%m-%dT%H:%M')
+
+    def clean_cpf_paciente(self):
+        # Método especial: clean_CAMPO — validação personalizada do campo "cpf_paciente"
+        # É chamado automaticamente pelo Django quando form.is_valid() é executado
+
+        cpf = self.cleaned_data.get('cpf_paciente', '')
+        # Remove formatação: "123.456.789-01" → "12345678901"
+        cpf_limpo = cpf.replace('.', '').replace('-', '').replace(' ', '')
+
+        try:
+            # Tenta encontrar o paciente com esse CPF que esteja ativo
+            return Paciente.objects.get(cpf=cpf_limpo, ativo=True)
+            # Se encontrar, retorna o OBJETO Paciente (não o CPF!)
+        except Paciente.DoesNotExist:
+            # Se não encontrar, lança erro de validação — o form.is_valid() retorna False
+            raise forms.ValidationError(
+                'Paciente com este CPF não encontrado. Cadastre o paciente primeiro.'
+            )
+
+    def save(self, commit=True):
+        # Sobrescreve o save padrão para associar o paciente encontrado pelo CPF
+        instance = super().save(commit=False)  # cria o objeto sem salvar no banco ainda
+
+        # clean_cpf_paciente() retornou o objeto Paciente — atribuímos à consulta
+        instance.paciente_id = self.cleaned_data['cpf_paciente']
+
+        if commit:
+            instance.save()  # agora sim salva no banco
+        return instance</code></pre>
+    </div>
+
+    <div class="box box-dica">
+      <strong>💡 Como funciona o clean_CAMPO?</strong>
+      Qualquer método chamado <code>clean_nomedocampo()</code> no form é executado automaticamente na validação. Se lançar <code>ValidationError</code>, o campo fica inválido. Se retornar um valor, esse valor substitui o original em <code>cleaned_data</code>. Por isso, retornamos o <em>objeto</em> Paciente em vez do CPF.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 9 ══════════════════════════════════ -->
+  <section id="s9">
+    <div class="section-title">
+      <div class="section-num">9</div>
+      <h2>Views — A Lógica do Sistema</h2>
+    </div>
+
+    <p>As <strong>Views</strong> são o coração do Django. Cada view recebe uma requisição HTTP, executa a lógica necessária (consultar banco, validar form, etc.) e retorna uma resposta HTTP (HTML, redirect, JSON…).</p>
+    <p>No nosso projeto usamos dois tipos: <strong>function-based views</strong> (funções simples) e <strong>class-based views</strong> (classes com comportamento pré-definido como ListView, CreateView, etc.).</p>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">🐍</span> intranet/views.py</div>
+      <pre><code class="language-python">import json
+from django.shortcuts import render, redirect          # funções auxiliares de resposta
+from django.contrib.auth.decorators import login_required  # decorator para exigir login
+from django.contrib.auth.mixins import LoginRequiredMixin  # mixin para class-based views
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy   # gera URL a partir do name (avaliação tardia)
+
+from .models import Medico, Paciente, Consulta
+from .forms  import MedicoForm, PacienteForm, ConsultaForm, ESPECIALIDADES
+
+
+# ─── Views de função simples ──────────────────────────────────────────────────
+
+def index(request):
+    # request é o objeto HTTP com todas as informações da requisição
+    if request.user.is_authenticated:   # verifica se há sessão de login ativa
+        return redirect('intranet:home')  # se logado, redireciona para home
+    return render(request, 'intranet/index.html')
+    # render(request, template) → carrega o template e devolve HTML como resposta
+
+
+@login_required   # decorator: se não estiver logado, redireciona para LOGIN_URL (/login/)
+def home(request):
+    return render(request, 'intranet/home.html')
+
+
+# ─── Class-Based Views para Médico ────────────────────────────────────────────
+
+# LoginRequiredMixin: equivalente ao @login_required para class-based views
+# Deve ser o PRIMEIRO na lista de herança para funcionar corretamente
+class MedicoListView(LoginRequiredMixin, ListView):
+    model                = Medico                        # qual model listar
+    template_name        = 'intranet/medico/listagem.html'
+    context_object_name  = 'medicos'  # nome da variável disponível no template ({{ medicos }})
+
+    def get_queryset(self):
+        # Sobrescreve a query padrão — retorna apenas médicos ativos, ordenados por nome
+        return Medico.objects.filter(ativo=True).order_by('nome')
+
+
+class MedicoCreateView(LoginRequiredMixin, CreateView):
+    model         = Medico
+    form_class    = MedicoForm                           # qual form usar para criar
+    template_name = 'intranet/medico/formulario.html'
+    success_url   = reverse_lazy('intranet:medico-list') # para onde ir após salvar
+
+    def get_context_data(self, **kwargs):
+        # Adiciona variáveis extras ao contexto do template
+        ctx = super().get_context_data(**kwargs)  # obtém o contexto padrão (form, etc.)
+        ctx['titulo'] = 'Cadastro de Médico'      # adiciona variável {{ titulo }} ao template
+        return ctx
+
+
+class MedicoUpdateView(LoginRequiredMixin, UpdateView):
+    model         = Medico
+    form_class    = MedicoForm
+    template_name = 'intranet/medico/formulario.html'  # reutiliza o mesmo template do create
+    success_url   = reverse_lazy('intranet:medico-list')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['titulo'] = 'Editar Médico'
+        return ctx
+
+
+class MedicoDeleteView(LoginRequiredMixin, DeleteView):
+    model         = Medico
+    template_name = 'intranet/medico/confirmar_exclusao.html'
+    success_url   = reverse_lazy('intranet:medico-list')
+    # O DeleteView exige um POST para deletar (proteção contra bots)
+    # O template deve ter um &lt;form method="post"&gt; com {% csrf_token %}
+
+
+# ─── Class-Based Views para Paciente ──────────────────────────────────────────
+# (mesmo padrão do Médico — estrutura idêntica, apenas com Paciente)
+
+class PacienteListView(LoginRequiredMixin, ListView):
+    model               = Paciente
+    template_name       = 'intranet/paciente/listagem.html'
+    context_object_name = 'pacientes'
+
+    def get_queryset(self):
+        return Paciente.objects.filter(ativo=True).order_by('nome')
+
+
+class PacienteCreateView(LoginRequiredMixin, CreateView):
+    model         = Paciente
+    form_class    = PacienteForm
+    template_name = 'intranet/paciente/formulario.html'
+    success_url   = reverse_lazy('intranet:paciente-list')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['titulo'] = 'Cadastro de Paciente'
+        return ctx
+
+
+class PacienteUpdateView(LoginRequiredMixin, UpdateView):
+    model         = Paciente
+    form_class    = PacienteForm
+    template_name = 'intranet/paciente/formulario.html'
+    success_url   = reverse_lazy('intranet:paciente-list')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['titulo'] = 'Editar Paciente'
+        return ctx
+
+
+class PacienteDeleteView(LoginRequiredMixin, DeleteView):
+    model         = Paciente
+    template_name = 'intranet/paciente/confirmar_exclusao.html'
+    success_url   = reverse_lazy('intranet:paciente-list')
+
+
+# ─── Class-Based Views para Consulta ──────────────────────────────────────────
+
+class ConsultaListView(LoginRequiredMixin, ListView):
+    model               = Consulta
+    template_name       = 'intranet/consulta/listagem.html'
+    context_object_name = 'consultas'
+
+    def get_queryset(self):
+        # select_related: faz JOIN no banco para buscar paciente e médico em UMA query
+        # sem select_related, cada linha da tabela geraria 2 queries extras (N+1 problem)
+        return Consulta.objects.select_related('paciente_id', 'medico_id').order_by('-horario')
+        #                                                                           ↑ - = decrescente (mais recente primeiro)
+
+
+def _medicos_json():
+    # Função auxiliar: retorna a lista de médicos ativos como string JSON
+    # Usada no template do formulário de consulta para filtrar médicos por especialidade via JS
+    medicos = list(
+        Medico.objects.filter(ativo=True)
+               .order_by('nome')
+               .values('id', 'nome', 'sobrenome', 'especialidade')
+               # values() retorna dicionários em vez de objetos Python (mais leve para JSON)
+    )
+    return json.dumps(medicos, ensure_ascii=False)
+    # ensure_ascii=False: mantém acentos no JSON (ex: "Cardiologia" não vira "é")
+
+
+class ConsultaCreateView(LoginRequiredMixin, CreateView):
+    model         = Consulta
+    form_class    = ConsultaForm
+    template_name = 'intranet/consulta/formulario.html'
+    success_url   = reverse_lazy('intranet:consulta-list')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['titulo']       = 'Agendamento de Consulta'
+        ctx['medicos_json'] = _medicos_json()     # passa JSON para o JavaScript do template
+        ctx['especialidades'] = ESPECIALIDADES    # passa lista para o template
+        return ctx
+
+
+class ConsultaUpdateView(LoginRequiredMixin, UpdateView):
+    model         = Consulta
+    form_class    = ConsultaForm
+    template_name = 'intranet/consulta/formulario.html'
+    success_url   = reverse_lazy('intranet:consulta-list')
+
+    def get_initial(self):
+        # get_initial: pré-preenche campos do form ao carregar a página de edição
+        initial = super().get_initial()
+        obj = self.get_object()  # busca a consulta pelo &lt;int:pk&gt; da URL
+        initial['cpf_paciente'] = obj.paciente_id.cpf         # pré-preenche o CPF
+        initial['especialidade'] = obj.medico_id.especialidade # pré-seleciona especialidade
+        return initial
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['titulo']       = 'Editar Consulta'
+        ctx['medicos_json'] = _medicos_json()
+        ctx['especialidades'] = ESPECIALIDADES
+        return ctx
+
+
+class ConsultaDeleteView(LoginRequiredMixin, DeleteView):
+    model         = Consulta
+    template_name = 'intranet/consulta/confirmar_exclusao.html'
+    success_url   = reverse_lazy('intranet:consulta-list')</code></pre>
+    </div>
+
+    <h3>Comparativo: Function-based vs Class-based Views</h3>
+    <table>
+      <tr><th>Aspecto</th><th>Function-based (def)</th><th>Class-based (class)</th></tr>
+      <tr><td>Quando usar</td><td>Lógica simples e personalizada</td><td>Operações padrão de CRUD</td></tr>
+      <tr><td>Código</td><td>Explícito — você escreve tudo</td><td>Conciso — herda comportamentos</td></tr>
+      <tr><td>Proteção de login</td><td><code>@login_required</code></td><td><code>LoginRequiredMixin</code></td></tr>
+      <tr><td>Exemplo</td><td><code>index</code>, <code>home</code></td><td>ListView, CreateView…</td></tr>
+    </table>
+
+    <div class="box box-dica">
+      <strong>💡 O que é reverse_lazy?</strong>
+      <code>reverse_lazy('intranet:medico-list')</code> converte o name da URL em seu caminho real (<code>/medicos/</code>). O <em>lazy</em> (preguiçoso) significa que a resolução acontece só quando necessário — importante porque as URLs ainda não estão carregadas no momento em que as classes são definidas.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 10 ═════════════════════════════════ -->
+  <section id="s10">
+    <div class="section-title">
+      <div class="section-num">10</div>
+      <h2>Templates — Base e Herança</h2>
+    </div>
+
+    <p>Os templates Django são arquivos HTML com marcadores especiais (<code>{{ variável }}</code>, <code>{% tag %}</code>) que o Django processa antes de enviar ao navegador. A característica mais poderosa é a <strong>herança de templates</strong>: um template "filho" pode estender um "pai", sobreescrevendo apenas os blocos que precisa.</p>
+
+    <div class="diagrama"><span class="dest">Hierarquia de Templates:</span>
+
+  base.html                    ← estrutura HTML completa (doctype, head, footer)
+  │  └── {% block header %}    ← header sem login (logo + botão Login)
+  │  └── {% block content %}   ← área central vazia
+  │
+  ├── base_logado.html          ← sobrescreve apenas o {% block header %}
+  │   └── header com dropdown CADASTROS e nome do usuário
+  │
+  ├── index.html                ← extends base.html → página inicial não logada
+  ├── login.html                ← extends base.html → formulário de login
+  ├── home.html                 ← extends base_logado.html → hero pós-login
+  ├── medico/listagem.html      ← extends base_logado.html → tabela de médicos
+  ├── medico/formulario.html    ← extends base_logado.html → form de médico
+  └── consulta/formulario.html  ← extends base_logado.html → form de consulta</div>
+
+    <h3>Template base.html</h3>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">📄</span> intranet/templates/intranet/base.html</div>
+      <pre><code class="language-markup">{% load static %}
+&lt;!-- {% load static %}: carrega a tag {% static %} que resolve caminhos de arquivos estáticos --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html lang="pt-br"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+
+  &lt;!-- {% block title %}: bloco que templates filhos podem sobreescrever --&gt;
+  &lt;title&gt;{% block title %}Consulta.me{% endblock %}&lt;/title&gt;
+
+  &lt;!-- {% static '...' %}: resolve o caminho do arquivo estático para /static/intranet/... --&gt;
+  &lt;link rel="stylesheet" href="{% static 'intranet/style.css' %}"&gt;
+
+  {% block extra_head %}{% endblock %}
+  &lt;!-- bloco vazio: templates filhos podem inserir CSS/JS extras aqui --&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+  {% block header %}
+  &lt;!-- Este bloco é substituído pelo base_logado.html quando o usuário está logado --&gt;
+  &lt;header class="header"&gt;
+    &lt;div class="container header-container"&gt;
+
+      &lt;!-- {% url 'intranet:index' %}: gera a URL /  a partir do name definido nas URLs --&gt;
+      &lt;a class="logo" href="{% url 'intranet:index' %}"&gt;
+        &lt;img src="{% static 'intranet/assets/logo.svg' %}" alt="Consulta.me"&gt;
+      &lt;/a&gt;
+
+      &lt;div class="navbar-form"&gt;
+        &lt;!-- {% url 'login' %}: URL da LoginView definida em sistema/urls.py --&gt;
+        &lt;a href="{% url 'login' %}" class="btn-link"&gt;Login&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/header&gt;
+  {% endblock %}
+
+  &lt;!-- Sistema de mensagens flash (ex: "Salvo com sucesso!") --&gt;
+  {% if messages %}
+  &lt;div class="container" style="margin-top:15px;"&gt;
+    {% for message in messages %}  &lt;!-- itera sobre as mensagens pendentes --&gt;
+    &lt;div style="padding:10px; border-radius:6px;"&gt;{{ message }}&lt;/div&gt;
+    {% endfor %}
+  &lt;/div&gt;
+  {% endif %}
+
+  {% block content %}{% endblock %}
+  &lt;!-- bloco principal: cada template filho preenche aqui com seu conteúdo --&gt;
+
+  &lt;footer class="footer"&gt;...&lt;/footer&gt;
+
+  {% block extra_scripts %}{% endblock %}
+  &lt;!-- scripts extras: o formulário de consulta insere o JavaScript de filtro aqui --&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    </div>
+
+    <h3>Template base_logado.html</h3>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">📄</span> intranet/templates/intranet/base_logado.html</div>
+      <pre><code class="language-markup">{% extends 'intranet/base.html' %}
+&lt;!-- extends: declara que este template herda de base.html --&gt;
+&lt;!-- Tudo que não está em um {% block %} é ignorado — só blocos são usados --&gt;
+
+{% load static %}
+
+{% block header %}
+&lt;!-- Sobrescreve o bloco header do pai — este é o cabeçalho para usuários logados --&gt;
+&lt;header class="header"&gt;
+  &lt;div class="container header-container"&gt;
+    &lt;a class="logo" href="{% url 'intranet:home' %}"&gt;
+      &lt;img src="{% static 'intranet/assets/logo.svg' %}" alt=""&gt;
+    &lt;/a&gt;
+
+    &lt;div class="wrapper"&gt;
+      &lt;nav class="main-nav"&gt;
+
+        &lt;!-- Dropdown CADASTROS --&gt;
+        &lt;ul class="nav-left"&gt;
+          &lt;li class="dropdown"&gt;  &lt;!-- :hover mostra .dropdown-menu via CSS --&gt;
+            &lt;a href=""&gt;CADASTROS &lt;i class="arrow-down"&gt;&lt;/i&gt;&lt;/a&gt;
+            &lt;ul class="dropdown-menu"&gt;
+              &lt;li&gt;&lt;a href="{% url 'intranet:medico-list' %}"&gt;Médicos&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href="{% url 'intranet:paciente-list' %}"&gt;Pacientes&lt;/a&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;a href="{% url 'intranet:consulta-list' %}"&gt;Consultas&lt;/a&gt;&lt;/li&gt;
+            &lt;/ul&gt;
+          &lt;/li&gt;
+        &lt;/ul&gt;
+
+        &lt;!-- Dropdown do usuário logado --&gt;
+        &lt;ul class="nav-right"&gt;
+          &lt;li class="dropdown"&gt;
+            &lt;a href=""&gt;
+              &lt;!-- request.user: o usuário Django autenticado na sessão atual --&gt;
+              &lt;!-- get_full_name: retorna "Nome Sobrenome"; se vazio, usa o username --&gt;
+              Olá, &lt;span&gt;{{ request.user.get_full_name|default:request.user.username }}&lt;/span&gt;
+              &lt;!-- |default:X: filtro Django — usa X se o valor anterior for vazio --&gt;
+            &lt;/a&gt;
+            &lt;ul class="dropdown-menu"&gt;
+              &lt;li&gt;
+                &lt;!-- Logout deve ser POST (proteção CSRF) — não pode ser link GET --&gt;
+                &lt;form method="post" action="{% url 'logout' %}"&gt;
+                  {% csrf_token %}  &lt;!-- token de segurança contra Cross-Site Request Forgery --&gt;
+                  &lt;button type="submit"&gt;Sair&lt;/button&gt;
+                &lt;/form&gt;
+              &lt;/li&gt;
+            &lt;/ul&gt;
+          &lt;/li&gt;
+        &lt;/ul&gt;
+
+      &lt;/nav&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/header&gt;
+{% endblock %}</code></pre>
+    </div>
+
+    <div class="box box-aviso">
+      <strong>⚠️ Por que o logout é um formulário POST?</strong>
+      Se o logout fosse um simples link GET, qualquer imagem ou link malicioso numa página externa poderia deslogar o usuário sem ele querer. Por isso o Django exige método POST para ações que alteram estado, e o <code>{% csrf_token %}</code> garante que o POST veio realmente do nosso site.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 11 ═════════════════════════════════ -->
+  <section id="s11">
+    <div class="section-title">
+      <div class="section-num">11</div>
+      <h2>Template — Página de Login</h2>
+    </div>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">📄</span> intranet/templates/intranet/login.html</div>
+      <pre><code class="language-markup">{% extends 'intranet/base.html' %}  &lt;!-- herda o layout base sem menu de logado --&gt;
+{% load static %}
+
+{% block title %}Consulta.me — Login{% endblock %}
+
+{% block content %}
+&lt;main class="container"&gt;
+  &lt;section class="card form-card"&gt;
+    &lt;h2 class="title"&gt;Login&lt;/h2&gt;
+
+    &lt;!-- method="post": dados enviados no corpo da requisição (não na URL) --&gt;
+    &lt;form method="post"&gt;
+      {% csrf_token %}  &lt;!-- obrigatório em todo formulário POST no Django --&gt;
+
+      &lt;!-- form.errors: dicionário com erros de validação do formulário Django --&gt;
+      {% if form.errors %}
+      &lt;p style="color:#c00;"&gt;Usuário ou senha incorretos. Tente novamente.&lt;/p&gt;
+      {% endif %}
+
+      &lt;div class="form-group"&gt;
+        &lt;label for="id_username"&gt;Usuário:&lt;/label&gt;
+        &lt;!-- Django espera os campos "username" e "password" na LoginView --&gt;
+        &lt;input id="id_username" name="username" type="text" required autofocus&gt;
+      &lt;/div&gt;
+
+      &lt;div class="form-group"&gt;
+        &lt;label for="id_password"&gt;Senha:&lt;/label&gt;
+        &lt;input id="id_password" name="password" type="password" required&gt;
+      &lt;/div&gt;
+
+      &lt;!-- "next": URL para onde redirecionar após login --&gt;
+      &lt;!-- ex: se tentou acessar /medicos/ sem login, next=/medicos/ e vai direto para lá --&gt;
+      &lt;input type="hidden" name="next" value="{{ next }}"&gt;
+
+      &lt;button class="btn btn-primary" type="submit"&gt;Entrar&lt;/button&gt;
+    &lt;/form&gt;
+  &lt;/section&gt;
+&lt;/main&gt;
+{% endblock %}</code></pre>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 12 ═════════════════════════════════ -->
+  <section id="s12">
+    <div class="section-title">
+      <div class="section-num">12</div>
+      <h2>Templates — Médico</h2>
+    </div>
+
+    <h3>Listagem de Médicos</h3>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">📄</span> intranet/templates/intranet/medico/listagem.html</div>
+      <pre><code class="language-markup">{% extends 'intranet/base_logado.html' %}  &lt;!-- herda o layout com menu de logado --&gt;
+{% load static %}
+
+{% block title %}Listagem de Médicos{% endblock %}
+
+{% block content %}
+&lt;main class="container"&gt;
+  &lt;section class="card"&gt;
+    &lt;h2 class="title"&gt;Listagem de médicos&lt;/h2&gt;
+
+    &lt;div class="table-controls"&gt;
+      &lt;!-- {% url 'intranet:medico-create' %} → /medicos/novo/ --&gt;
+      &lt;a href="{% url 'intranet:medico-create' %}" class="btn btn-tertiary"&gt;
+        &lt;img src="{% static 'intranet/assets/plus.png' %}" class="btn-icon"&gt; Novo Médico
+      &lt;/a&gt;
+    &lt;/div&gt;
+
+    &lt;table class="tabela"&gt;
+      &lt;thead&gt;...&lt;/thead&gt;
+      &lt;tbody&gt;
+
+        &lt;!-- {% for medico in medicos %}: itera sobre a lista "medicos" enviada pela View --&gt;
+        {% for medico in medicos %}
+        &lt;tr&gt;
+          &lt;td&gt;{{ medico.nome }} {{ medico.sobrenome }}&lt;/td&gt;
+          &lt;td&gt;{{ medico.email }}&lt;/td&gt;
+          &lt;td&gt;{{ medico.crm }}&lt;/td&gt;
+          &lt;td&gt;{{ medico.especialidade }}&lt;/td&gt;
+          &lt;td&gt;
+            &lt;!-- medico.pk = primary key (ID) do médico — usado na URL dinâmica --&gt;
+            &lt;a href="{% url 'intranet:medico-update' medico.pk %}"&gt;
+              &lt;img src="{% static 'intranet/assets/edit.svg' %}" alt="Editar"&gt;
+            &lt;/a&gt;
+            &lt;a href="{% url 'intranet:medico-delete' medico.pk %}"&gt;
+              &lt;img src="{% static 'intranet/assets/delete.svg' %}" alt="Excluir"&gt;
+            &lt;/a&gt;
+          &lt;/td&gt;
+        &lt;/tr&gt;
+
+        {% empty %}
+        &lt;!-- {% empty %}: exibido quando a lista está vazia --&gt;
+        &lt;tr&gt;&lt;td colspan="5"&gt;Nenhum médico cadastrado.&lt;/td&gt;&lt;/tr&gt;
+
+        {% endfor %}
+      &lt;/tbody&gt;
+    &lt;/table&gt;
+  &lt;/section&gt;
+&lt;/main&gt;
+{% endblock %}</code></pre>
+    </div>
+
+    <h3>Formulário de Médico (Create &amp; Update)</h3>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">📄</span> intranet/templates/intranet/medico/formulario.html</div>
+      <pre><code class="language-markup">{% extends 'intranet/base_logado.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }}{% endblock %}
+&lt;!-- {{ titulo }} vem do get_context_data da View: "Cadastro de Médico" ou "Editar Médico" --&gt;
+
+{% block content %}
+&lt;main class="container"&gt;
+  &lt;section class="card form-card"&gt;
+    &lt;h2 class="title"&gt;{{ titulo }}&lt;/h2&gt;
+
+    &lt;form method="post"&gt;
+      {% csrf_token %}
+
+      &lt;!-- Renderizamos campo por campo para controlar o layout com as classes CSS --&gt;
+
+      &lt;div class="form-group"&gt;
+        &lt;label for="id_nome"&gt;Nome:&lt;/label&gt;
+        {{ form.nome }}
+        &lt;!-- {{ form.nome }} renderiza o &lt;input&gt; do campo "nome" do MedicoForm --&gt;
+        {% if form.nome.errors %}&lt;p style="color:#c00;"&gt;{{ form.nome.errors }}&lt;/p&gt;{% endif %}
+        &lt;!-- form.nome.errors: lista de erros de validação deste campo específico --&gt;
+      &lt;/div&gt;
+
+      &lt;!-- ... campos sobrenome, email, telefone, crm seguem o mesmo padrão ... --&gt;
+
+      &lt;div class="form-group"&gt;
+        &lt;label for="id_especialidade"&gt;Especialidade:&lt;/label&gt;
+        {{ form.especialidade }}
+        &lt;!-- Renderiza o &lt;select&gt; com as opções de ESPECIALIDADES definidas no forms.py --&gt;
+      &lt;/div&gt;
+
+      &lt;div class="buttons"&gt;
+        &lt;button type="submit" class="btn btn-primary"&gt;Salvar&lt;/button&gt;
+        &lt;a href="{% url 'intranet:medico-list' %}" class="btn btn-secondary"&gt;Voltar&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/form&gt;
+  &lt;/section&gt;
+&lt;/main&gt;
+{% endblock %}</code></pre>
+    </div>
+
+    <div class="box box-info">
+      <strong>✅ Um formulário para criar E editar</strong>
+      O mesmo template <code>formulario.html</code> serve tanto para o CreateView quanto para o UpdateView. A diferença é que o UpdateView pré-preenche os campos com os dados existentes — o Django faz isso automaticamente quando a view passa o <code>object</code> no contexto.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 13 ═════════════════════════════════ -->
+  <section id="s13">
+    <div class="section-title">
+      <div class="section-num">13</div>
+      <h2>Templates — Paciente</h2>
+    </div>
+
+    <p>Os templates de paciente seguem exatamente a mesma estrutura dos de médico. A listagem exibe Nome, E-mail, Telefone e CPF (conforme o requisito da atividade). O formulário tem os campos: Nome, Sobrenome, E-mail, Telefone e CPF.</p>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">📄</span> intranet/templates/intranet/paciente/listagem.html (estrutura)</div>
+      <pre><code class="language-markup">{% for paciente in pacientes %}
+&lt;tr&gt;
+  &lt;td&gt;{{ paciente.nome }} {{ paciente.sobrenome }}&lt;/td&gt;
+  &lt;td&gt;{{ paciente.email }}&lt;/td&gt;
+  &lt;td&gt;{{ paciente.telefone }}&lt;/td&gt;
+  &lt;td&gt;{{ paciente.cpf }}&lt;/td&gt;
+  &lt;td&gt;
+    &lt;a href="{% url 'intranet:paciente-update' paciente.pk %}"&gt;editar&lt;/a&gt;
+    &lt;a href="{% url 'intranet:paciente-delete' paciente.pk %}"&gt;excluir&lt;/a&gt;
+  &lt;/td&gt;
+&lt;/tr&gt;
+{% empty %}
+  &lt;tr&gt;&lt;td colspan="5"&gt;Nenhum paciente cadastrado.&lt;/td&gt;&lt;/tr&gt;
+{% endfor %}</code></pre>
+    </div>
+
+    <div class="box box-aviso">
+      <strong>⚠️ CPF no banco sem formatação</strong>
+      O model guarda o CPF como texto puro (11 dígitos, sem pontos e traço). O formulário de consulta limpa a formatação antes de buscar: <code>cpf.replace('.','').replace('-','')</code>. Se quiser exibir formatado, use um filtro de template personalizado ou formate com JavaScript.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 14 ═════════════════════════════════ -->
+  <section id="s14">
+    <div class="section-title">
+      <div class="section-num">14</div>
+      <h2>Templates — Consulta</h2>
+    </div>
+
+    <p>O formulário de consulta é o mais complexo — ele filtra os médicos por especialidade usando <strong>JavaScript</strong> no cliente, e busca o paciente pelo CPF no servidor.</p>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">📄</span> intranet/templates/intranet/consulta/formulario.html</div>
+      <pre><code class="language-markup">{% extends 'intranet/base_logado.html' %}
+{% load static %}
+
+{% block content %}
+&lt;main class="container"&gt;
+  &lt;section class="card form-card"&gt;
+    &lt;h2 class="title"&gt;{{ titulo }}&lt;/h2&gt;
+
+    &lt;form method="post"&gt;
+      {% csrf_token %}
+
+      &lt;!-- 1. Especialidade: dropdown não salvo, apenas filtra os médicos via JS --&gt;
+      &lt;div class="form-group"&gt;
+        &lt;label&gt;Especialidade:&lt;/label&gt;
+        {{ form.especialidade }}  &lt;!-- renderiza o &lt;select id="id_especialidade"&gt; --&gt;
+      &lt;/div&gt;
+
+      &lt;!-- 2. Médico: inicialmente vazio, preenchido pelo JavaScript --&gt;
+      &lt;div class="form-group"&gt;
+        &lt;label&gt;Médico:&lt;/label&gt;
+        {{ form.medico_id }}  &lt;!-- &lt;select id="id_medico_id"&gt; --&gt;
+      &lt;/div&gt;
+
+      &lt;!-- 3. CPF: o servidor usa este valor para buscar o Paciente --&gt;
+      &lt;div class="form-group"&gt;
+        &lt;label&gt;CPF do Paciente:&lt;/label&gt;
+        {{ form.cpf_paciente }}
+        {% if form.cpf_paciente.errors %}
+          &lt;p style="color:#c00;"&gt;{{ form.cpf_paciente.errors }}&lt;/p&gt;
+        {% endif %}
+      &lt;/div&gt;
+
+      &lt;!-- 4. Data e hora --&gt;
+      &lt;div class="form-group"&gt;
+        &lt;label&gt;Data e Hora:&lt;/label&gt;
+        {{ form.horario }}  &lt;!-- &lt;input type="datetime-local"&gt; --&gt;
+      &lt;/div&gt;
+
+      &lt;div class="buttons"&gt;
+        &lt;button type="submit" class="btn btn-primary"&gt;Salvar&lt;/button&gt;
+        &lt;a href="{% url 'intranet:consulta-list' %}" class="btn btn-secondary"&gt;Voltar&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/form&gt;
+  &lt;/section&gt;
+&lt;/main&gt;
+{% endblock %}
+
+{% block extra_scripts %}
+&lt;script&gt;
+  // medicos_json: variável Python injetada no template pela view (ConsultaCreateView)
+  // |escapejs: filtro Django que escapa aspas e caracteres especiais para uso em JS
+  const todosOsMedicos = JSON.parse('{{ medicos_json|escapejs }}');
+  // Resultado: array de objetos [{id:1, nome:"João", sobrenome:"Silva", especialidade:"ORTOPEDIA"}, ...]
+
+  function filtrarMedicos() {
+    const especialidade = document.getElementById('id_especialidade').value;
+    // Captura o valor selecionado no dropdown de especialidades
+
+    const selectMedico = document.getElementById('id_medico_id');
+    const valorAtual   = selectMedico.value;  // guarda o médico já selecionado (edição)
+
+    selectMedico.innerHTML = '&lt;option value=""&gt;---------&lt;/option&gt;';
+    // Limpa o dropdown de médicos antes de popular
+
+    // Filtra o array: se especialidade selecionada, mostra apenas médicos dela
+    const lista = especialidade
+      ? todosOsMedicos.filter(m =&gt; m.especialidade === especialidade)
+      : todosOsMedicos;  // se nenhuma especialidade, mostra todos
+
+    lista.forEach(m =&gt; {
+      const opt       = document.createElement('option');
+      opt.value       = m.id;
+      opt.textContent = m.nome + ' ' + m.sobrenome;
+      if (String(m.id) === String(valorAtual)) opt.selected = true;
+      // Re-seleciona o médico anterior se estiver editando
+      selectMedico.appendChild(opt);
+    });
+  }
+
+  // Filtra ao trocar a especialidade
+  document.getElementById('id_especialidade').addEventListener('change', filtrarMedicos);
+
+  // Filtra ao carregar a página (importante para pré-preencher no modo edição)
+  window.addEventListener('DOMContentLoaded', filtrarMedicos);
+&lt;/script&gt;
+{% endblock %}</code></pre>
+    </div>
+
+    <h3>Listagem de Consultas</h3>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">📄</span> consulta/listagem.html (trecho da tabela)</div>
+      <pre><code class="language-markup">{% for consulta in consultas %}
+&lt;tr&gt;
+  &lt;!-- consulta.paciente_id é o OBJETO Paciente (ForeignKey), não o ID --&gt;
+  &lt;td&gt;{{ consulta.paciente_id.nome }} {{ consulta.paciente_id.sobrenome }}&lt;/td&gt;
+  &lt;td&gt;{{ consulta.medico_id.nome }}   {{ consulta.medico_id.sobrenome }}&lt;/td&gt;
+
+  &lt;!-- |date: filtro Django que formata datetime --&gt;
+  &lt;td&gt;{{ consulta.horario|date:"d/m/Y H:i" }}&lt;/td&gt;
+  &lt;!-- ex: 20/05/2026 14:30 --&gt;
+
+  &lt;!-- get_status_display(): retorna "Agendada" em vez de "A" --&gt;
+  &lt;td&gt;{{ consulta.get_status_display }}&lt;/td&gt;
+
+  &lt;td&gt;
+    &lt;a href="{% url 'intranet:consulta-update' consulta.pk %}"&gt;editar&lt;/a&gt;
+    &lt;a href="{% url 'intranet:consulta-delete' consulta.pk %}"&gt;excluir&lt;/a&gt;
+  &lt;/td&gt;
+&lt;/tr&gt;
+{% endfor %}</code></pre>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 15 ═════════════════════════════════ -->
+  <section id="s15">
+    <div class="section-title">
+      <div class="section-num">15</div>
+      <h2>Arquivos Estáticos — CSS e Imagens</h2>
+    </div>
+
+    <p>Arquivos estáticos são CSS, JavaScript e imagens que não mudam com as requisições. O Django os serve de forma especial para garantir cache e organização.</p>
+
+    <h3>Onde ficam os arquivos</h3>
+
+    <div class="diagrama"><span class="dest">intranet/static/intranet/</span>
+├── style.css              ← toda a estilização do projeto
+└── assets/
+    ├── logo.svg            ← logotipo do sistema
+    ├── medico.png          ← ilustração do médico (hero)
+    ├── medica.png          ← ilustração da médica (hero)
+    ├── plus.png            ← ícone de adicionar (+)
+    ├── edit.svg            ← ícone de editar (lápis)
+    ├── delete.svg          ← ícone de excluir (lixeira)
+    ├── back.png            ← ícone de voltar (seta)
+    └── logo-alura.png      ← logo do rodapé</div>
+
+    <div class="box box-dica">
+      <strong>💡 Por que a pasta se chama intranet/static/intranet/?</strong>
+      Django unifica os estáticos de todos os apps em uma pasta só. Se dois apps tiverem um arquivo <code>style.css</code>, haveria conflito. A convenção é criar uma subpasta com o nome do app: <code>intranet/static/<strong>intranet</strong>/style.css</code> → URL pública: <code>/static/<strong>intranet</strong>/style.css</code>.
+    </div>
+
+    <h3>Como usar nos templates</h3>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">📄</span> Usando arquivos estáticos em qualquer template</div>
+      <pre><code class="language-markup">&lt;!-- 1. SEMPRE carregue a tag static no topo do template --&gt;
+{% load static %}
+
+&lt;!-- 2. Use {% static 'caminho' %} para referenciar o arquivo --&gt;
+&lt;link rel="stylesheet" href="{% static 'intranet/style.css' %}"&gt;
+&lt;!-- gera: /static/intranet/style.css --&gt;
+
+&lt;img src="{% static 'intranet/assets/logo.svg' %}" alt="Logo"&gt;
+&lt;!-- gera: /static/intranet/assets/logo.svg --&gt;
+
+&lt;!-- NUNCA use caminhos relativos como ../style.css em templates Django --&gt;
+&lt;!-- O Django pode servir a página de qualquer URL, tornando relativos inválidos --&gt;</code></pre>
+    </div>
+
+    <h3>O CSS do dropdown — detalhe importante</h3>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">🎨</span> intranet/static/intranet/style.css (trecho do dropdown)</div>
+      <pre><code class="language-css">/* position: relative é obrigatório no elemento pai do dropdown */
+/* Sem isso, o menu position:absolute sai fora do lugar */
+.header .dropdown {
+  position: relative;   /* ancora o menu abaixo deste elemento */
+}
+
+/* O menu começa oculto */
+.header .dropdown-menu {
+  display: none;
+  position: absolute;   /* posicionado em relação ao .dropdown pai */
+  top: 100%;            /* aparece logo abaixo do elemento pai */
+  left: 0;
+  background-color: #339cff;
+  z-index: 1;           /* fica na frente de outros elementos */
+  min-width: 150px;
+}
+
+/* Ao passar o mouse no .dropdown, o menu filho aparece */
+.header .dropdown:hover .dropdown-menu {
+  display: block;
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 16 ═════════════════════════════════ -->
+  <section id="s16">
+    <div class="section-title">
+      <div class="section-num">16</div>
+      <h2>Autenticação — Login e Proteção</h2>
+    </div>
+
+    <p>O Django já vem com um sistema completo de autenticação. Não precisamos criar nada do zero — apenas configuramos e conectamos ao nosso layout.</p>
+
+    <h3>Como o login funciona</h3>
+
+    <div class="diagrama"><span class="dest">Fluxo de Login:</span>
+
+  1. Usuário acessa /medicos/ sem estar logado
+  2. LoginRequiredMixin detecta que não há sessão ativa
+  3. Redireciona para /login/?next=/medicos/
+  4. Usuário preenche usuário/senha
+  5. Django verifica no banco (tabela auth_user)
+  6. Se correto: cria sessão, salva cookie no browser
+  7. Redireciona para /medicos/ (valor de "next")
+  8. Nas próximas requisições, Django lê o cookie e identifica o usuário</div>
+
+    <h3>Proteção nas views</h3>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">🐍</span> Dois jeitos de proteger uma view</div>
+      <pre><code class="language-python">from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+
+# ── Jeito 1: Function-based view ─────────────────────────────────────────────
+
+@login_required            # decorator: aplicado antes da função
+def home(request):         # se não estiver logado, redireciona para LOGIN_URL
+    return render(request, 'intranet/home.html')
+
+
+# ── Jeito 2: Class-based view ─────────────────────────────────────────────────
+
+class MedicoListView(LoginRequiredMixin, ListView):
+    # LoginRequiredMixin DEVE ser o primeiro da herança
+    # Se não estiver logado, redireciona para LOGIN_URL definido no settings
+    model    = Medico
+    template = 'intranet/medico/listagem.html'</code></pre>
+    </div>
+
+    <h3>Configurações de autenticação no settings.py</h3>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">🐍</span> sistema/settings.py (parte de autenticação)</div>
+      <pre><code class="language-python">LOGIN_URL           = '/login/'   # URL da página de login
+LOGIN_REDIRECT_URL  = '/home/'    # onde ir APÓS login bem-sucedido
+LOGOUT_REDIRECT_URL = '/'         # onde ir APÓS logout</code></pre>
+    </div>
+
+    <div class="box box-info">
+      <strong>✅ Como criar o primeiro usuário administrador</strong>
+      <br>Execute no terminal com o ambiente virtual ativado:
+      <br><code>python manage.py createsuperuser</code>
+      <br>O Django pedirá: nome de usuário, e-mail (opcional) e senha.
+      <br>Este usuário pode acessar o painel em <code>/admin/</code> E fazer login em <code>/login/</code>.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SEÇÃO 17 ═════════════════════════════════ -->
+  <section id="s17">
+    <div class="section-title">
+      <div class="section-num">17</div>
+      <h2>Fluxo Completo — Como Tudo se Conecta</h2>
+    </div>
+
+    <p>Veja o caminho completo de uma requisição — do clique do usuário até o HTML na tela:</p>
+
+    <div class="diagrama"><span class="dest">Exemplo: usuário clica em "Novo Médico"</span>
+
+  <span class="amarelo">BROWSER</span>
+    GET /medicos/novo/
+        │
+        ▼
+  <span class="amarelo">sistema/urls.py</span>
+    path('', include('intranet.urls'))  →  delega para intranet
+        │
+        ▼
+  <span class="amarelo">intranet/urls.py</span>
+    path('medicos/novo/', MedicoCreateView.as_view(), name='medico-create')
+        │
+        ▼
+  <span class="amarelo">intranet/views.py — MedicoCreateView</span>
+    1. LoginRequiredMixin verifica sessão → OK, usuário está logado
+    2. get() é chamado → instancia um MedicoForm vazio
+    3. get_context_data() → {'form': &lt;form vazio&gt;, 'titulo': 'Cadastro de Médico'}
+    4. render(template, context) → processa o template com os dados
+        │
+        ▼
+  <span class="amarelo">intranet/medico/formulario.html</span>
+    1. {% extends base_logado.html %} → carrega o layout
+    2. {{ titulo }} → "Cadastro de Médico"
+    3. {{ form.nome }}, {{ form.email }}... → &lt;input&gt;s HTML renderizados
+    4. HTML completo gerado
+        │
+        ▼
+  <span class="verde">BROWSER recebe o HTML → exibe o formulário ao usuário</span>
+
+
+<span class="dest">Exemplo: usuário preenche e clica em "Salvar"</span>
+
+  <span class="amarelo">BROWSER</span>
+    POST /medicos/novo/  (dados: nome=João, email=joao@..., crm=12345...)
+        │
+        ▼
+  <span class="amarelo">intranet/views.py — MedicoCreateView.post()</span>
+    1. MedicoForm(request.POST) → instancia o form com os dados enviados
+    2. form.is_valid() → valida todos os campos
+       - CharField não pode estar vazio
+       - EmailField valida formato de e-mail
+       - ChoiceField valida se a especialidade existe na lista
+    3. Se inválido → renderiza o template novamente com os erros
+    4. Se válido → form.save() → INSERT INTO intranet_medico (...)
+        │
+        ▼
+  <span class="amarelo">Redirect para /medicos/</span>
+        │
+        ▼
+  <span class="verde">BROWSER exibe a listagem com o novo médico incluído</span></div>
+
+    <h3>Resumo das tecnologias e suas funções</h3>
+
+    <table>
+      <tr><th>Tecnologia</th><th>Função no projeto</th></tr>
+      <tr><td><strong>Python</strong></td><td>Linguagem base de todo o backend</td></tr>
+      <tr><td><strong>Django</strong></td><td>Framework web: ORM, views, templates, autenticação</td></tr>
+      <tr><td><strong>SQLite</strong></td><td>Banco de dados relacional (arquivo único, ideal para aprendizado)</td></tr>
+      <tr><td><strong>HTML + CSS</strong></td><td>Interface visual do sistema (templates + static files)</td></tr>
+      <tr><td><strong>JavaScript</strong></td><td>Filtro dinâmico de médicos por especialidade no formulário de consulta</td></tr>
+      <tr><td><strong>Prism.js</strong></td><td>Syntax highlighting desta apostila</td></tr>
+    </table>
+
+    <hr class="divisor">
+
+    <h3>Comandos do dia a dia</h3>
+
+    <div class="code-block">
+      <div class="arquivo-label"><span class="icone">$</span> Terminal — Comandos úteis</div>
+      <pre><code class="language-bash"># Ativar ambiente virtual
+source .venv/bin/activate           # macOS/Linux
+.venv\Scripts\activate              # Windows
+
+# Subir o servidor de desenvolvimento
+python manage.py runserver          # acesse http://127.0.0.1:8000/
+
+# Criar superusuário (primeiro acesso)
+python manage.py createsuperuser
+
+# Após alterar models.py
+python manage.py makemigrations     # gera o arquivo de migration
+python manage.py migrate            # aplica no banco
+
+# Abrir shell Python com contexto Django (útil para testar queries)
+python manage.py shell
+
+# Exemplo de uso no shell:
+# from intranet.models import Medico
+# Medico.objects.all()              → lista todos os médicos
+# Medico.objects.filter(ativo=True) → filtra apenas ativos
+# Medico.objects.get(pk=1)          → busca pelo ID</code></pre>
+    </div>
+
+
+    <div style="text-align:center; margin-top:50px; color:#888; font-size:13px;">
+      <p>Apostila — Sistema Médico com Django &nbsp;|&nbsp; Consulta.me</p>
+      <p style="margin-top:6px;">2026 © Desenvolvido por Aluno | Projeto fictício sem fins comerciais.</p>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- ═════════════════════════ Scripts ═══════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+
+<script>
+  // Scrollspy: marca o item ativo na sidebar conforme o usuário rola a página
+  const sections = document.querySelectorAll('section[id]');
+  const links    = document.querySelectorAll('.sidebar nav a');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('ativo'));
+        const ativo = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+        if (ativo) ativo.classList.add('ativo');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
